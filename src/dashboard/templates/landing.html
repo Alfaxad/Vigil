@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vigil — Behavioral Intelligence for Agent Wallets</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        @layer components {
+            .liquid-glass {
+                background: rgba(255,255,255,0.01);
+                background-blend-mode: luminosity;
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+                border: none;
+                box-shadow: inset 0 1px 1px rgba(255,255,255,0.1);
+                position: relative;
+                overflow: hidden;
+            }
+            .liquid-glass::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: inherit;
+                padding: 1.4px;
+                background: linear-gradient(180deg,
+                    rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 20%,
+                    rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
+                    rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.45) 100%);
+                -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                -webkit-mask-composite: xor;
+                mask-composite: exclude;
+                pointer-events: none;
+            }
+            .liquid-glass-strong {
+                background: rgba(255,255,255,0.03);
+                background-blend-mode: luminosity;
+                backdrop-filter: blur(50px);
+                -webkit-backdrop-filter: blur(50px);
+                border: none;
+                box-shadow: 4px 4px 4px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.15);
+                position: relative;
+                overflow: hidden;
+            }
+            .liquid-glass-strong::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                border-radius: inherit;
+                padding: 1.4px;
+                background: linear-gradient(180deg,
+                    rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 20%,
+                    rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
+                    rgba(255,255,255,0.2) 80%, rgba(255,255,255,0.5) 100%);
+                -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+                -webkit-mask-composite: xor;
+                mask-composite: exclude;
+                pointer-events: none;
+            }
+        }
+
+        :root {
+            --bg: #050505;
+            --text: #fafafa;
+            --text-muted: #a1a1aa;
+            --green: #22c55e;
+            --green-dim: rgba(34, 197, 94, 0.15);
+            --amber: #f59e0b;
+            --red: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Ambient background */
+        .bg-glow {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .bg-glow .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+        }
+        .bg-glow .orb-1 {
+            width: 600px; height: 600px;
+            background: var(--green);
+            top: -200px; left: -100px;
+            animation: float 20s ease-in-out infinite;
+        }
+        .bg-glow .orb-2 {
+            width: 400px; height: 400px;
+            background: var(--amber);
+            bottom: -100px; right: -50px;
+            animation: float 25s ease-in-out infinite reverse;
+        }
+        .bg-glow .orb-3 {
+            width: 300px; height: 300px;
+            background: var(--red);
+            top: 50%; left: 60%;
+            opacity: 0.08;
+            animation: float 30s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(30px, -20px); }
+            66% { transform: translate(-20px, 30px); }
+        }
+
+        .content { position: relative; z-index: 1; }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 32px;
+        }
+        .logo {
+            font-family: 'Instrument Serif', serif;
+            font-size: 32px;
+            font-weight: 400;
+            letter-spacing: -1px;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .logo em {
+            font-style: italic;
+            color: var(--text-muted);
+        }
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 9999px;
+            transition: color 0.2s, background 0.2s;
+        }
+        .nav-links a:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.05);
+        }
+        .nav-cta {
+            padding: 10px 24px !important;
+            border-radius: 9999px !important;
+            font-weight: 500 !important;
+            color: var(--bg) !important;
+            background: var(--green) !important;
+            transition: transform 0.2s, opacity 0.2s !important;
+        }
+        .nav-cta:hover {
+            transform: scale(1.03);
+            opacity: 0.9;
+            background: var(--green) !important;
+            color: var(--bg) !important;
+        }
+
+        /* Hero */
+        .hero {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 120px 32px 80px;
+        }
+        .hero h1 {
+            font-family: 'Instrument Serif', serif;
+            font-size: clamp(48px, 8vw, 88px);
+            font-weight: 400;
+            line-height: 0.95;
+            letter-spacing: -2.5px;
+            margin-bottom: 24px;
+        }
+        .hero h1 em {
+            font-style: italic;
+            color: var(--text-muted);
+        }
+        .hero p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 32px;
+            border-radius: 9999px;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            color: var(--bg);
+            background: var(--green);
+            transition: transform 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary:hover { transform: scale(1.03); }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 32px;
+            border-radius: 9999px;
+            font-size: 16px;
+            font-weight: 500;
+            text-decoration: none;
+            color: var(--text);
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Dashboard preview */
+        .preview-container {
+            max-width: 1100px;
+            margin: 0 auto 100px;
+            padding: 0 32px;
+        }
+        .preview-frame {
+            border-radius: 20px;
+            padding: 2px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.03) 100%);
+        }
+        .preview-inner {
+            border-radius: 18px;
+            background: rgba(10, 10, 10, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 24px;
+            overflow: hidden;
+        }
+        .preview-bar {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+        .preview-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+        }
+        .preview-dot:first-child { background: #ef4444; }
+        .preview-dot:nth-child(2) { background: #f59e0b; }
+        .preview-dot:nth-child(3) { background: #22c55e; }
+
+        .mini-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .mini-stat {
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .mini-stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .mini-stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+        .mini-stat-value.g { color: var(--green); }
+        .mini-stat-value.a { color: var(--amber); }
+        .mini-stat-value.r { color: var(--red); }
+
+        .mini-rows { display: flex; flex-direction: column; gap: 4px; }
+        .mini-row {
+            display: grid;
+            grid-template-columns: 80px 1fr 80px 90px;
+            gap: 12px;
+            align-items: center;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .mini-row:hover { background: rgba(255,255,255,0.02); }
+        .mini-hash { font-family: monospace; color: var(--text-muted); font-size: 11px; }
+        .mini-bar-wrap {
+            height: 4px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .mini-bar-fill { height: 100%; border-radius: 2px; }
+        .mini-badge {
+            display: inline-flex;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .mini-badge.approve { background: var(--green-dim); color: var(--green); }
+        .mini-badge.flag { background: rgba(245,158,11,0.15); color: var(--amber); }
+        .mini-badge.block { background: rgba(239,68,68,0.15); color: var(--red); }
+
+        /* Features */
+        .features {
+            max-width: 1100px;
+            margin: 0 auto 120px;
+            padding: 0 32px;
+        }
+        .features-title {
+            font-family: 'Instrument Serif', serif;
+            font-size: 40px;
+            font-weight: 400;
+            text-align: center;
+            margin-bottom: 60px;
+            letter-spacing: -1px;
+        }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .feature-card {
+            border-radius: 20px;
+            padding: 32px;
+        }
+        .feature-card h3 .dot {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        .dot-green { background: var(--green); }
+        .dot-amber { background: var(--amber); }
+        .dot-red { background: var(--red); }
+        .feature-card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .feature-card p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-muted);
+        }
+
+        /* API section */
+        .api-section {
+            max-width: 800px;
+            margin: 0 auto 120px;
+            padding: 0 32px;
+            text-align: center;
+        }
+        .api-title {
+            font-family: 'Instrument Serif', serif;
+            font-size: 40px;
+            font-weight: 400;
+            margin-bottom: 16px;
+            letter-spacing: -1px;
+        }
+        .api-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            font-size: 16px;
+        }
+        .code-wrapper {
+            position: relative;
+        }
+        .code-block {
+            text-align: left;
+            border-radius: 16px;
+            padding: 24px;
+            padding-right: 56px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            color: var(--text-muted);
+        }
+        .code-block .cmd { color: var(--green); }
+        .code-block .str { color: var(--amber); }
+        .code-block .key { color: #818cf8; }
+        .copy-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            font-family: 'Inter', sans-serif;
+            z-index: 2;
+        }
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.15);
+            color: var(--text);
+        }
+        .copy-toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--green);
+            color: var(--bg);
+            padding: 10px 24px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 100;
+        }
+        .copy-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Animations */
+        @keyframes fadeRise {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .anim { animation: fadeRise 0.8s ease-out both; }
+        .anim-1 { animation-delay: 0.1s; }
+        .anim-2 { animation-delay: 0.2s; }
+        .anim-3 { animation-delay: 0.3s; }
+        .anim-4 { animation-delay: 0.5s; }
+
+        @media (max-width: 768px) {
+            .features-grid { grid-template-columns: 1fr; }
+            .mini-stats { grid-template-columns: repeat(2, 1fr); }
+            .mini-row { grid-template-columns: 1fr 1fr; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+
+    <div class="content">
+        <nav class="navbar anim">
+            <a href="/" class="logo">Vigil<em>.</em></a>
+            <div class="nav-links">
+                <a href="#features">How it works</a>
+                <a href="#api">API</a>
+                <a href="/developer">Docs</a>
+                <a href="/login" class="nav-cta">Login</a>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <h1 class="anim">The trust layer between <em>your agent</em><br>and <em>your money.</em></h1>
+            <p class="anim anim-1">Vigil provides real-time behavioral intelligence for your agent.</p>
+            <div class="hero-buttons anim anim-2">
+                <a href="/login" class="btn-primary">Login</a>
+                <a href="#api" class="btn-secondary liquid-glass">Try the API &rarr;</a>
+            </div>
+        </section>
+
+        <!-- Dashboard Preview -->
+        <div class="preview-container anim anim-3">
+            <div class="preview-frame">
+                <div class="preview-inner">
+                    <div class="preview-bar">
+                        <div class="preview-dot"></div>
+                        <div class="preview-dot"></div>
+                        <div class="preview-dot"></div>
+                    </div>
+                    <div class="mini-stats">
+                        <div class="mini-stat liquid-glass">
+                            <div class="mini-stat-label">Audited</div>
+                            <div class="mini-stat-value">847</div>
+                        </div>
+                        <div class="mini-stat liquid-glass">
+                            <div class="mini-stat-label">Approved</div>
+                            <div class="mini-stat-value g">812</div>
+                        </div>
+                        <div class="mini-stat liquid-glass">
+                            <div class="mini-stat-label">Flagged</div>
+                            <div class="mini-stat-value a">31</div>
+                        </div>
+                        <div class="mini-stat liquid-glass">
+                            <div class="mini-stat-label">Blocked</div>
+                            <div class="mini-stat-value r">4</div>
+                        </div>
+                    </div>
+                    <div class="mini-rows">
+                        <div class="mini-row">
+                            <span class="mini-hash">0xa3f8...c21e</span>
+                            <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:12%;background:var(--green)"></div></div>
+                            <span class="mono" style="color:var(--text-muted);font-size:12px">0.12</span>
+                            <span class="mini-badge approve">APPROVE</span>
+                        </div>
+                        <div class="mini-row">
+                            <span class="mini-hash">0xb7e2...4f9a</span>
+                            <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:8%;background:var(--green)"></div></div>
+                            <span class="mono" style="color:var(--text-muted);font-size:12px">0.08</span>
+                            <span class="mini-badge approve">APPROVE</span>
+                        </div>
+                        <div class="mini-row">
+                            <span class="mini-hash">0xd4c1...8b3e</span>
+                            <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:54%;background:var(--amber)"></div></div>
+                            <span class="mono" style="color:var(--text-muted);font-size:12px">0.54</span>
+                            <span class="mini-badge flag">FLAG</span>
+                        </div>
+                        <div class="mini-row">
+                            <span class="mini-hash">0xcc00...fa01</span>
+                            <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:82%;background:var(--red)"></div></div>
+                            <span class="mono" style="color:var(--text-muted);font-size:12px">0.82</span>
+                            <span class="mini-badge block">BLOCK</span>
+                        </div>
+                        <div class="mini-row">
+                            <span class="mini-hash">0xe5a9...1d7c</span>
+                            <div class="mini-bar-wrap"><div class="mini-bar-fill" style="width:5%;background:var(--green)"></div></div>
+                            <span class="mono" style="color:var(--text-muted);font-size:12px">0.05</span>
+                            <span class="mini-badge approve">APPROVE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works — Animated Pipeline -->
+        <section class="features" id="features">
+            <h2 class="features-title anim">How Vigil <em style="font-family:'Instrument Serif',serif;font-style:italic;color:var(--text-muted)">works.</em></h2>
+            <p style="text-align:center;color:var(--text-muted);max-width:600px;margin:0 auto 56px;font-size:15px;line-height:1.6;" class="anim anim-1">Every transaction flows through four layers. A pulse of data becomes a verdict in milliseconds.</p>
+
+            <!-- Pipeline — Interactive Canvas -->
+            <div class="anim anim-2 liquid-glass-strong" style="max-width:960px;margin:0 auto 80px;border-radius:20px;padding:0;position:relative;">
+                <canvas id="pipeline-canvas" style="width:100%;display:block;"></canvas>
+            </div>
+
+            <!-- Onchain Receipt Example -->
+            <div style="max-width:520px;margin:0 auto 80px;">
+                <h3 style="font-family:'Instrument Serif',serif;font-size:24px;text-align:center;margin-bottom:24px;font-weight:400;" class="anim">Every audit. <em style="font-style:italic;color:var(--text-muted)">Onchain.</em></h3>
+                <div class="liquid-glass-strong anim anim-1" style="border-radius:16px;padding:24px;font-family:'SF Mono','Fira Code',monospace;font-size:12px;line-height:1.8;">
+                    <div style="color:var(--text-muted);margin-bottom:12px;font-family:'Inter',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;">ERC-8004 Attestation</div>
+                    <div><span style="color:var(--text-muted);">schema:</span> <span style="color:var(--amber);">vigil-audit-v1</span></div>
+                    <div><span style="color:var(--text-muted);">attester:</span> <span style="color:#818cf8;">vigil.base</span></div>
+                    <div><span style="color:var(--text-muted);">subject:</span> <span style="color:#818cf8;">0xAgent...7f3e</span></div>
+                    <div><span style="color:var(--text-muted);">tx_hash:</span> <span style="color:#818cf8;">0xabc1...d82f</span></div>
+                    <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">
+                        <span style="color:var(--text-muted);">verdict:</span> <span style="color:var(--green);font-weight:600;">APPROVE</span>
+                    </div>
+                    <div><span style="color:var(--text-muted);">risk_score:</span> <span style="color:var(--green);">0.12</span></div>
+                    <div><span style="color:var(--text-muted);">domain:</span> <span style="color:var(--amber);">defi-swap</span></div>
+                    <div><span style="color:var(--text-muted);">reasoning:</span> <span style="color:var(--text-muted);">"Standard swap to verified Uniswap Router. Counterparty seen 347 times."</span></div>
+                    <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">
+                        <span style="color:var(--text-muted);">tags:</span> <span style="display:inline-flex;gap:6px;margin-top:2px;">
+                            <span style="background:var(--green-dim);color:var(--green);padding:2px 8px;border-radius:9999px;font-size:10px;">clean</span>
+                            <span style="background:rgba(96,165,250,0.12);color:#60a5fa;padding:2px 8px;border-radius:9999px;font-size:10px;">defi-swap</span>
+                            <span style="background:rgba(168,85,247,0.12);color:#a855f7;padding:2px 8px;border-radius:9999px;font-size:10px;">vigil-audit</span>
+                        </span>
+                    </div>
+                    <div style="margin-top:10px;"><span style="color:var(--text-muted);">signature:</span> <span style="color:rgba(255,255,255,0.25);">0x7f2c...e91a</span></div>
+                </div>
+            </div>
+
+            <!-- Reputation Graph — Interactive Canvas -->
+            <div style="max-width:900px;margin:0 auto 40px;padding:0 32px;">
+                <h3 style="font-family:'Instrument Serif',serif;font-size:24px;text-align:center;margin-bottom:8px;font-weight:400;" class="anim">Shared trust. <em style="font-style:italic;color:var(--text-muted)">Live intelligence.</em></h3>
+                <p style="text-align:center;color:var(--text-muted);font-size:14px;margin-bottom:32px;" class="anim anim-1">Every agent Vigil monitors feeds the counterparty graph. One agent's experience becomes intelligence for all.</p>
+
+                <div class="anim anim-2 liquid-glass-strong" style="border-radius:20px;padding:0;position:relative;overflow:hidden;">
+                    <canvas id="graph-canvas" style="width:100%;display:block;"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- API -->
+        <section class="api-section" id="api">
+            <h2 class="api-title anim">Trust as a service.</h2>
+            <p class="api-subtitle anim anim-1">Any agent can call Vigil before executing a risky transaction. $0.01 per query.</p>
+            <div class="code-wrapper anim anim-2">
+                <button class="copy-btn" onclick="copyCode()">Copy</button>
+                <div class="code-block liquid-glass-strong" id="code-content">
+<span class="cmd">curl</span> -X POST https://vigil.nadhari.ai/api/audit \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="key">"transaction"</span>: {
+      <span class="key">"from"</span>: <span class="str">"0xYourAgent"</span>,
+      <span class="key">"to"</span>: <span class="str">"0xSomeAddress"</span>,
+      <span class="key">"amount"</span>: 150.00,
+      <span class="key">"memo"</span>: <span class="str">"NFT purchase"</span>
+    },
+    <span class="key">"agent_context"</span>: {
+      <span class="key">"name"</span>: <span class="str">"MyBot"</span>,
+      <span class="key">"task"</span>: <span class="str">"Execute approved NFT purchases under $200"</span>
+    }
+  }'
+                </div>
+            </div>
+        </section>
+
+        <!-- Onboarding -->
+        <section class="api-section" style="margin-top: 0;">
+            <h2 class="api-title anim">Join Vigil</h2>
+            <p class="api-subtitle anim anim-1">Read the skill file and follow the instructions to start monitoring your agent's wallet.</p>
+            <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;" class="anim anim-2">
+                <a href="/skill.md" target="_blank" class="btn-primary" style="text-decoration:none;">Read skill.md</a>
+                <a href="/api/register" class="btn-secondary liquid-glass" style="text-decoration:none;">Register via API</a>
+            </div>
+            <div class="code-wrapper anim anim-3" style="margin-top:32px;">
+                <button class="copy-btn" onclick="copySkill()">Copy</button>
+                <div class="code-block liquid-glass-strong" id="skill-content" style="padding-right:56px;">
+<span class="cmd">curl</span> -s <span class="str">https://vigil.nadhari.ai/skill.md</span></div>
+            </div>
+        </section>
+
+        <div class="copy-toast" id="copy-toast">Copied to clipboard</div>
+    </div>
+
+    <script>
+    /* ══════════════════════════════════════════
+       PIPELINE ANIMATION (Canvas)
+       ══════════════════════════════════════════ */
+    (function() {
+        var canvas = document.getElementById('pipeline-canvas');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var dpr = window.devicePixelRatio || 1;
+        var W, H;
+        var hovered = -1;
+
+        var stages = [
+            { label: 'Perception', sub: 'Statistical filter, z-score baselines', color: '#22c55e', letter: 'P' },
+            { label: 'Policy', sub: 'Natural language rules, boundaries', color: '#6366f1', letter: 'P' },
+            { label: 'Reasoning', sub: 'Intent analysis, drift detection', color: '#f59e0b', letter: 'R' },
+            { label: 'Signal', sub: 'ERC-8004 receipt, reputation update', color: '#a855f7', letter: 'S' }
+        ];
+
+        var arrowT = 0;
+        var dashOffset = 0;
+
+        function resize() {
+            var rect = canvas.parentElement.getBoundingClientRect();
+            W = rect.width;
+            H = Math.max(260, W * 0.32);
+            canvas.width = W * dpr;
+            canvas.height = H * dpr;
+            canvas.style.height = H + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function hexToRgb(hex) {
+            var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+            return [r,g,b];
+        }
+
+        function lerpColor(c1, c2, t) {
+            var a = hexToRgb(c1), b = hexToRgb(c2);
+            return 'rgb(' + Math.round(a[0]+(b[0]-a[0])*t) + ',' + Math.round(a[1]+(b[1]-a[1])*t) + ',' + Math.round(a[2]+(b[2]-a[2])*t) + ')';
+        }
+
+        function draw(ts) {
+            ctx.clearRect(0, 0, W, H);
+            var pad = 80;
+            var boxW = Math.min(100, (W - pad*2) * 0.11);
+            var boxH = Math.min(48, H * 0.24);
+            var usable = W - pad * 2;
+            var gap = (usable - stages.length * boxW) / (stages.length - 1);
+            gap = Math.max(40, gap);
+            var totalSpan = stages.length * boxW + (stages.length - 1) * gap;
+            var startX = (W - totalSpan) / 2;
+            var cy = H * 0.35;
+
+            var boxes = stages.map(function(s, i) {
+                return { x: startX + i * (boxW + gap), y: cy - boxH / 2, w: boxW, h: boxH, color: s.color, label: s.label, sub: s.sub, letter: s.letter, layer: i + 1 };
+            });
+
+            // Draw arrows between boxes
+            for (var i = 0; i < boxes.length - 1; i++) {
+                var ax1 = boxes[i].x + boxW + 4;
+                var ax2 = boxes[i+1].x - 4;
+                var len = ax2 - ax1;
+
+                // Glow
+                ctx.save();
+                ctx.globalAlpha = 0.06;
+                ctx.strokeStyle = lerpColor(boxes[i].color, boxes[i+1].color, 0.5);
+                ctx.lineWidth = 8;
+                ctx.shadowColor = ctx.strokeStyle;
+                ctx.shadowBlur = 12;
+                ctx.beginPath(); ctx.moveTo(ax1, cy); ctx.lineTo(ax2, cy); ctx.stroke();
+                ctx.restore();
+
+                // Base line
+                ctx.save();
+                ctx.globalAlpha = 0.2;
+                ctx.strokeStyle = lerpColor(boxes[i].color, boxes[i+1].color, 0.5);
+                ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(ax1, cy); ctx.lineTo(ax2, cy); ctx.stroke();
+                ctx.restore();
+
+                // Flowing dashes
+                ctx.save();
+                ctx.globalAlpha = 0.45;
+                ctx.strokeStyle = lerpColor(boxes[i].color, boxes[i+1].color, 0.5);
+                ctx.lineWidth = 2.5;
+                ctx.setLineDash([len * 0.15, len * 0.1]);
+                ctx.lineDashOffset = dashOffset;
+                ctx.lineCap = 'round';
+                ctx.beginPath(); ctx.moveTo(ax1, cy); ctx.lineTo(ax2, cy); ctx.stroke();
+                ctx.restore();
+
+                // Arrowhead at end
+                ctx.save();
+                ctx.fillStyle = boxes[i+1].color;
+                ctx.globalAlpha = 0.9;
+                ctx.beginPath();
+                ctx.moveTo(ax2, cy);
+                ctx.lineTo(ax2 - 8, cy - 4);
+                ctx.lineTo(ax2 - 8, cy + 4);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+                // Animated chevrons
+                var numArr = 4;
+                for (var j = 0; j < numArr; j++) {
+                    var t = ((arrowT * numArr + j) / numArr) % 1;
+                    var px = ax1 + len * t;
+                    var op = Math.sin(t * Math.PI) * 0.7 + 0.1;
+                    var col = lerpColor(boxes[i].color, boxes[i+1].color, t);
+                    var sz = 6;
+
+                    // Glow
+                    ctx.save();
+                    ctx.globalAlpha = op * 0.15;
+                    ctx.fillStyle = col;
+                    ctx.shadowColor = col;
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath(); ctx.arc(px, cy, sz * 1.8, 0, Math.PI*2); ctx.fill();
+                    ctx.restore();
+
+                    // Chevron
+                    ctx.save();
+                    ctx.globalAlpha = op * 0.85;
+                    ctx.fillStyle = col;
+                    ctx.beginPath();
+                    ctx.moveTo(px - sz, cy - sz * 0.6);
+                    ctx.lineTo(px + sz, cy);
+                    ctx.lineTo(px - sz, cy + sz * 0.6);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+
+                    // Trail
+                    ctx.save();
+                    ctx.globalAlpha = op * 0.4;
+                    ctx.strokeStyle = col;
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath(); ctx.moveTo(px - sz * 2.5, cy); ctx.lineTo(px - sz, cy); ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            // Draw stage boxes
+            for (var i = 0; i < boxes.length; i++) {
+                var b = boxes[i];
+                var isH = hovered === i;
+                var rgb = hexToRgb(b.color);
+
+                // Glow behind
+                ctx.save();
+                ctx.globalAlpha = isH ? 0.15 : 0.06;
+                ctx.fillStyle = b.color;
+                ctx.shadowColor = b.color;
+                ctx.shadowBlur = 20;
+                ctx.beginPath();
+                ctx.roundRect(b.x - 12, b.y - 12, b.w + 24, b.h + 24, 14);
+                ctx.fill();
+                ctx.restore();
+
+                // Box background
+                ctx.save();
+                ctx.fillStyle = 'rgba(10,10,18,0.92)';
+                ctx.beginPath();
+                ctx.roundRect(b.x, b.y, b.w, b.h, 8);
+                ctx.fill();
+                // Border
+                ctx.strokeStyle = b.color;
+                ctx.lineWidth = isH ? 2 : 1.2;
+                ctx.globalAlpha = isH ? 0.85 : 0.35;
+                ctx.stroke();
+                if (isH) {
+                    ctx.shadowColor = b.color;
+                    ctx.shadowBlur = 14;
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                // Layer number
+                ctx.save();
+                ctx.globalAlpha = 0.35;
+                ctx.fillStyle = b.color;
+                ctx.font = '600 7px Inter, sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(b.layer, b.x + b.w - 8, b.y + 12);
+                ctx.restore();
+
+                // Label
+                ctx.save();
+                ctx.fillStyle = b.color;
+                ctx.font = "700 14px 'Inter', sans-serif";
+                ctx.textAlign = 'center';
+                ctx.fillText(b.label, b.x + b.w/2, b.y + b.h/2 + 5);
+                ctx.restore();
+
+                // Subtitle below box
+                ctx.save();
+                ctx.fillStyle = '#a1a1aa';
+                ctx.font = "400 10px 'Inter', sans-serif";
+                ctx.textAlign = 'center';
+                var parts = b.sub.split(', ');
+                for (var p = 0; p < parts.length; p++) {
+                    ctx.fillText(parts[p], b.x + b.w/2, b.y + b.h + 28 + p * 14);
+                }
+                ctx.restore();
+            }
+
+
+            arrowT = (arrowT + 0.0004) % 1;
+            dashOffset -= 0.8;
+            requestAnimationFrame(draw);
+        }
+
+        // Hit detection
+        canvas.addEventListener('mousemove', function(e) {
+            var rect = canvas.getBoundingClientRect();
+            var mx = e.clientX - rect.left;
+            var my = e.clientY - rect.top;
+            var boxW = Math.min(120, W * 0.13);
+            var boxH = Math.min(52, H * 0.26);
+            var gap = Math.max(60, (W - 60 - stages.length * boxW) / (stages.length - 1));
+            var totalSpan = stages.length * boxW + (stages.length - 1) * gap;
+            var startX = (W - totalSpan) / 2;
+            var cy = H * 0.35;
+            hovered = -1;
+            for (var i = 0; i < stages.length; i++) {
+                var bx = startX + i * (boxW + gap);
+                var by = cy - boxH / 2;
+                if (mx >= bx && mx <= bx + boxW && my >= by && my <= by + boxH) {
+                    hovered = i;
+                    break;
+                }
+            }
+            canvas.style.cursor = hovered >= 0 ? 'pointer' : 'default';
+        });
+        canvas.addEventListener('mouseleave', function() { hovered = -1; });
+
+        resize();
+        window.addEventListener('resize', resize);
+        requestAnimationFrame(draw);
+    })();
+
+    /* ══════════════════════════════════════════
+       NETWORK GRAPH ANIMATION (Canvas)
+       ══════════════════════════════════════════ */
+    (function() {
+        var canvas = document.getElementById('graph-canvas');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var dpr = window.devicePixelRatio || 1;
+        var W, H;
+        var hoveredNode = -1;
+
+        var nodes = [
+            { id: 'vigil', label: 'VIGIL', sub: 'auditor', x: 0.5, y: 0.48, score: null, color: '#22c55e', radius: 52, glow: true },
+            { id: 'tradingbot', label: 'TradingBot', x: 0.22, y: 0.2, score: 0.97, color: '#22c55e', radius: 32 },
+            { id: 'defiagent', label: 'DeFiAgent', x: 0.78, y: 0.17, score: 0.99, color: '#22c55e', radius: 34 },
+            { id: 'uniswap', label: 'Uniswap', x: 0.15, y: 0.48, score: 0.99, color: '#22c55e', radius: 28 },
+            { id: 'nftbot', label: 'NFTBot', x: 0.25, y: 0.78, score: 0.82, color: '#a855f7', radius: 30 },
+            { id: 'flagged', label: 'Flagged', x: 0.85, y: 0.48, score: 0.12, color: '#ef4444', radius: 28 },
+            { id: 'unknown', label: 'Unknown', x: 0.76, y: 0.78, score: 0.41, color: '#f59e0b', radius: 32 }
+        ];
+
+        var edges = [
+            { from: 0, to: 1, color: '#22c55e' },
+            { from: 0, to: 2, color: '#22c55e' },
+            { from: 0, to: 3, color: '#22c55e' },
+            { from: 0, to: 4, color: '#a855f7' },
+            { from: 0, to: 5, color: '#ef4444' },
+            { from: 0, to: 6, color: '#f59e0b' },
+            { from: 1, to: 3, color: '#22c55e' },
+            { from: 2, to: 5, color: '#ef4444' },
+            { from: 4, to: 6, color: '#f59e0b' }
+        ];
+
+        // Particles along edges
+        var particles = [];
+        edges.forEach(function(e, ei) {
+            for (var i = 0; i < 3; i++) {
+                particles.push({ edge: ei, t: i / 3, speed: 0.001 + Math.random() * 0.002, size: 2 + Math.random() * 2 });
+            }
+        });
+
+        // Background dots
+        var bgDots = [];
+        for (var i = 0; i < 30; i++) {
+            bgDots.push({ x: Math.random(), y: Math.random(), vx: (Math.random()-0.5)*0.0001, vy: (Math.random()-0.5)*0.0001, r: 1+Math.random()*1.5, o: 0.05+Math.random()*0.08 });
+        }
+
+        var breathe = 0;
+
+        function resize() {
+            var rect = canvas.parentElement.getBoundingClientRect();
+            W = rect.width;
+            H = Math.max(380, W * 0.5);
+            canvas.width = W * dpr;
+            canvas.height = H * dpr;
+            canvas.style.height = H + 'px';
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function hexToRgba(hex, a) {
+            var r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+            return 'rgba('+r+','+g+','+b+','+a+')';
+        }
+
+        function scoreColor(s) {
+            return s >= 0.9 ? '#22c55e' : s >= 0.7 ? '#a855f7' : s >= 0.3 ? '#f59e0b' : '#ef4444';
+        }
+
+        function clipToCircle(ax, ay, bx, by, r) {
+            var dx = bx - ax, dy = by - ay;
+            var dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist === 0) return { x: ax, y: ay };
+            return { x: ax + (dx/dist) * r, y: ay + (dy/dist) * r };
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            breathe += 0.02;
+
+            // Background dots
+            bgDots.forEach(function(d) {
+                d.x += d.vx; d.y += d.vy;
+                if (d.x < 0 || d.x > 1) d.vx *= -1;
+                if (d.y < 0 || d.y > 1) d.vy *= -1;
+                ctx.save();
+                ctx.globalAlpha = d.o;
+                ctx.fillStyle = '#94a3b8';
+                ctx.beginPath(); ctx.arc(d.x * W, d.y * H, d.r, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            });
+
+            // Draw edges
+            edges.forEach(function(e, ei) {
+                var a = nodes[e.from], b = nodes[e.to];
+                var ax = a.x * W, ay = a.y * H, bx = b.x * W, by = b.y * H;
+                var start = clipToCircle(ax, ay, bx, by, a.radius + 6);
+                var end = clipToCircle(bx, by, ax, ay, b.radius + 10);
+                var isH = hoveredNode === e.from || hoveredNode === e.to;
+
+                // Glow on hover
+                if (isH) {
+                    ctx.save();
+                    ctx.globalAlpha = 0.1;
+                    ctx.strokeStyle = e.color;
+                    ctx.lineWidth = 5;
+                    ctx.shadowColor = e.color;
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.lineTo(end.x, end.y); ctx.stroke();
+                    ctx.restore();
+                }
+
+                // Main edge
+                ctx.save();
+                ctx.globalAlpha = isH ? 0.7 : 0.2;
+                ctx.strokeStyle = e.color;
+                ctx.lineWidth = isH ? 2 : 1;
+                ctx.beginPath(); ctx.moveTo(start.x, start.y); ctx.lineTo(end.x, end.y); ctx.stroke();
+                ctx.restore();
+
+                // Arrow tip
+                var angle = Math.atan2(end.y - start.y, end.x - start.x);
+                ctx.save();
+                ctx.globalAlpha = isH ? 0.8 : 0.5;
+                ctx.fillStyle = e.color;
+                ctx.translate(end.x, end.y);
+                ctx.rotate(angle);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(-7, -3.5);
+                ctx.lineTo(-7, 3.5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+            });
+
+            // Draw particles
+            particles.forEach(function(pt) {
+                pt.t = (pt.t + pt.speed) % 1;
+                var e = edges[pt.edge];
+                var a = nodes[e.from], b = nodes[e.to];
+                var ax = a.x * W, ay = a.y * H, bx = b.x * W, by = b.y * H;
+                var start = clipToCircle(ax, ay, bx, by, a.radius + 6);
+                var end = clipToCircle(bx, by, ax, ay, b.radius + 10);
+                var px = start.x + (end.x - start.x) * pt.t;
+                var py = start.y + (end.y - start.y) * pt.t;
+
+                // Glow
+                ctx.save();
+                ctx.globalAlpha = 0.2;
+                ctx.fillStyle = e.color;
+                ctx.shadowColor = e.color;
+                ctx.shadowBlur = 8;
+                ctx.beginPath(); ctx.arc(px, py, pt.size * 2.5, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+
+                // Dot
+                ctx.save();
+                ctx.globalAlpha = 0.7;
+                ctx.fillStyle = e.color;
+                ctx.beginPath(); ctx.arc(px, py, pt.size, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+            });
+
+            // Draw nodes
+            nodes.forEach(function(n, i) {
+                var cx = n.x * W, cy = n.y * H;
+                var isH = hoveredNode === i;
+                var r = n.radius;
+                if (n.glow) r += Math.sin(breathe) * 3;
+                var scale = isH ? 1.08 : 1;
+
+                // Outer glow
+                ctx.save();
+                ctx.globalAlpha = isH ? 0.3 : 0.12;
+                var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 2.2 * scale);
+                grad.addColorStop(0, hexToRgba(n.color, 0.3));
+                grad.addColorStop(1, hexToRgba(n.color, 0));
+                ctx.fillStyle = grad;
+                ctx.beginPath(); ctx.arc(cx, cy, r * 2.2 * scale, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+
+                // Circle body
+                ctx.save();
+                ctx.fillStyle = 'rgba(10,10,15,0.9)';
+                ctx.beginPath(); ctx.arc(cx, cy, r * scale, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = n.color;
+                ctx.lineWidth = isH ? 2.5 : 1.5;
+                ctx.globalAlpha = isH ? 0.9 : 0.5;
+                ctx.stroke();
+                ctx.restore();
+
+                // Label
+                ctx.save();
+                ctx.fillStyle = n.color;
+                ctx.textAlign = 'center';
+                if (n.id === 'vigil') {
+                    ctx.font = "700 18px 'Inter', sans-serif";
+                    ctx.fillText(n.label, cx, cy - 4);
+                    ctx.globalAlpha = 0.5;
+                    ctx.font = "400 10px 'Inter', sans-serif";
+                    ctx.fillText('auditor', cx, cy + 12);
+                } else {
+                    ctx.font = "600 11px 'Inter', sans-serif";
+                    ctx.fillText(n.label, cx, n.score !== null ? cy - 4 : cy + 4);
+                    if (n.score !== null) {
+                        ctx.fillStyle = scoreColor(n.score);
+                        ctx.font = "600 11px 'Inter', sans-serif";
+                        ctx.fillText(n.score.toFixed(2), cx, cy + 12);
+                    }
+                }
+                ctx.restore();
+            });
+
+            requestAnimationFrame(draw);
+        }
+
+        // Hit detection
+        canvas.addEventListener('mousemove', function(e) {
+            var rect = canvas.getBoundingClientRect();
+            var mx = e.clientX - rect.left;
+            var my = e.clientY - rect.top;
+            hoveredNode = -1;
+            for (var i = nodes.length - 1; i >= 0; i--) {
+                var n = nodes[i];
+                var cx = n.x * W, cy = n.y * H;
+                var dx = mx - cx, dy = my - cy;
+                if (dx*dx + dy*dy <= n.radius * n.radius) {
+                    hoveredNode = i;
+                    break;
+                }
+            }
+            canvas.style.cursor = hoveredNode >= 0 ? 'pointer' : 'default';
+        });
+        canvas.addEventListener('mouseleave', function() { hoveredNode = -1; });
+
+        resize();
+        window.addEventListener('resize', resize);
+        requestAnimationFrame(draw);
+    })();
+
+    function copyCode() {
+        var code = document.getElementById('code-content').textContent.trim();
+        var textarea = document.createElement('textarea');
+        textarea.value = code;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        var btn = document.querySelector('.copy-btn');
+        btn.textContent = 'Copied';
+        btn.style.background = 'rgba(34, 197, 94, 0.2)';
+        btn.style.color = '#22c55e';
+        btn.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+
+        var toast = document.getElementById('copy-toast');
+        toast.classList.add('show');
+
+        setTimeout(function() {
+            toast.classList.remove('show');
+            btn.textContent = 'Copy';
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+        }, 2000);
+    }
+
+    function copySkill() {
+        var code = document.getElementById('skill-content').textContent.trim();
+        var textarea = document.createElement('textarea');
+        textarea.value = code;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+
+        var btns = document.querySelectorAll('.copy-btn');
+        var btn = btns[btns.length - 1];
+        btn.textContent = 'Copied';
+        btn.style.background = 'rgba(34, 197, 94, 0.2)';
+        btn.style.color = '#22c55e';
+        btn.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+
+        var toast = document.getElementById('copy-toast');
+        toast.classList.add('show');
+
+        setTimeout(function() {
+            toast.classList.remove('show');
+            btn.textContent = 'Copy';
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.borderColor = '';
+        }, 2000);
+    }
+    </script>
+</body>
+</html>

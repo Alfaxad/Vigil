@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vigil — Developer Docs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --text: #fafafa;
+            --text-muted: #a1a1aa;
+            --green: #22c55e;
+            --green-dim: rgba(34, 197, 94, 0.12);
+            --amber: #f59e0b;
+            --red: #ef4444;
+            --indigo: #6366f1;
+            --purple: #a855f7;
+            --surface: rgba(255,255,255,0.03);
+            --border: rgba(255,255,255,0.06);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Layout */
+        .docs-layout { display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            padding: 24px 0;
+            border-right: 1px solid var(--border);
+            background: rgba(5,5,5,0.95);
+            backdrop-filter: blur(20px);
+            overflow-y: auto;
+            z-index: 50;
+        }
+        .sidebar-logo {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            padding: 0 24px 24px;
+            text-decoration: none;
+            color: var(--text);
+            display: block;
+        }
+        .sidebar-logo em { font-style: italic; color: var(--text-muted); }
+        .sidebar-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            padding: 16px 24px 8px;
+        }
+        .sidebar-link {
+            display: block;
+            padding: 8px 24px;
+            font-size: 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s, background 0.2s;
+            border-left: 2px solid transparent;
+        }
+        .sidebar-link:hover { color: var(--text); background: rgba(255,255,255,0.02); }
+        .sidebar-link.active {
+            color: var(--green);
+            border-left-color: var(--green);
+            background: rgba(34,197,94,0.04);
+        }
+
+        /* Content */
+        .docs-content {
+            margin-left: 260px;
+            flex: 1;
+            max-width: 800px;
+            padding: 48px 48px 100px;
+        }
+
+        h1 {
+            font-family: 'Instrument Serif', serif;
+            font-size: 40px;
+            font-weight: 400;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+        }
+        h1 em { font-style: italic; color: var(--text-muted); }
+        .subtitle {
+            font-size: 16px;
+            color: var(--text-muted);
+            margin-bottom: 48px;
+        }
+
+        h2 {
+            font-family: 'Instrument Serif', serif;
+            font-size: 28px;
+            font-weight: 400;
+            margin: 48px 0 16px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border);
+        }
+        h2:first-of-type { border-top: none; padding-top: 0; }
+
+        h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 28px 0 12px;
+            color: var(--text);
+        }
+
+        p { color: var(--text-muted); margin-bottom: 16px; font-size: 15px; }
+        strong { color: var(--text); font-weight: 600; }
+
+        /* Code blocks */
+        .code-block {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 56px 20px 20px;
+            margin: 16px 0 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            overflow-x: auto;
+            position: relative;
+        }
+        .code-copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-muted);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            font-family: 'Inter', sans-serif;
+            z-index: 2;
+        }
+        .code-copy-btn:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+        .code-copy-btn.copied {
+            background: rgba(34,197,94,0.15);
+            color: var(--green);
+            border-color: rgba(34,197,94,0.25);
+        }
+        .copy-toast-docs {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--green);
+            color: #050505;
+            padding: 10px 24px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 100;
+        }
+        .copy-toast-docs.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .code-block .comment { color: #6b7280; }
+        .code-block .key { color: var(--indigo); }
+        .code-block .str { color: var(--amber); }
+        .code-block .cmd { color: var(--green); }
+        .code-block .num { color: var(--purple); }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            background: var(--surface);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--green);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 24px;
+            font-size: 14px;
+        }
+        th {
+            text-align: left;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 10px 16px;
+            color: var(--text-muted);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        td code { font-size: 12px; }
+
+        /* Response card */
+        .response-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0 24px;
+        }
+        .response-card .field {
+            display: flex;
+            gap: 8px;
+            padding: 4px 0;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .response-card .field-key { color: var(--text-muted); min-width: 140px; }
+        .response-card .field-val { color: var(--text); }
+        .response-card .field-val.green { color: var(--green); }
+        .response-card .field-val.amber { color: var(--amber); }
+        .response-card .field-val.red { color: var(--red); }
+
+        /* Badge */
+        .method-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            margin-right: 8px;
+        }
+        .method-post { background: rgba(34,197,94,0.12); color: var(--green); }
+        .method-get { background: rgba(96,165,250,0.12); color: #60a5fa; }
+
+        .endpoint {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        /* Callout */
+        .callout {
+            border-left: 3px solid var(--green);
+            padding: 16px 20px;
+            margin: 16px 0 24px;
+            background: rgba(34,197,94,0.04);
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+        .callout.warn { border-left-color: var(--amber); background: rgba(245,158,11,0.04); }
+
+        /* Pill list */
+        .pill-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 24px; }
+        .pill-item {
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .pill-green { background: var(--green-dim); color: var(--green); }
+        .pill-amber { background: rgba(245,158,11,0.12); color: var(--amber); }
+        .pill-purple { background: rgba(168,85,247,0.12); color: var(--purple); }
+        .pill-indigo { background: rgba(99,102,241,0.12); color: var(--indigo); }
+
+        ul { margin: 12px 0 24px; padding-left: 24px; }
+        li { color: var(--text-muted); font-size: 14px; margin-bottom: 6px; }
+        li strong { color: var(--text); }
+
+        /* Back to home */
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--text-muted); text-decoration: none; font-size: 13px;
+            padding: 8px 16px; border-radius: 8px;
+            transition: color 0.2s, background 0.2s;
+            position: fixed; bottom: 24px; left: 24px;
+        }
+        .back-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .docs-content { margin-left: 0; padding: 24px 20px 80px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="docs-layout">
+        <nav class="sidebar">
+            <a href="/" class="sidebar-logo">Vigil<em>.</em></a>
+
+            <div class="sidebar-label">Getting Started</div>
+            <a href="#overview" class="sidebar-link active">Overview</a>
+            <a href="#quickstart" class="sidebar-link">Quickstart</a>
+            <a href="#authentication" class="sidebar-link">Authentication</a>
+
+            <div class="sidebar-label">API Reference</div>
+            <a href="#register" class="sidebar-link">Register</a>
+            <a href="#regenerate" class="sidebar-link">Regenerate Key</a>
+            <a href="#audit" class="sidebar-link">Audit Transaction</a>
+            <a href="#reputation" class="sidebar-link">Reputation Graph</a>
+
+            <div class="sidebar-label">Core Concepts</div>
+            <a href="#pipeline" class="sidebar-link">Audit Pipeline</a>
+            <a href="#policies" class="sidebar-link">Policy Engine</a>
+            <a href="#attestations" class="sidebar-link">ERC-8004 Attestations</a>
+
+            <div class="sidebar-label">Integration</div>
+            <a href="#sdk" class="sidebar-link">Agent SDK</a>
+            <a href="#cli" class="sidebar-link">CLI Reference</a>
+            <a href="#webhooks" class="sidebar-link">Webhooks</a>
+            <a href="#pricing" class="sidebar-link">Pricing</a>
+
+            <div style="padding:24px;">
+                <a href="/login" style="display:block;text-align:center;padding:10px;border-radius:9999px;background:var(--green);color:var(--bg);text-decoration:none;font-size:14px;font-weight:500;">Open Dashboard</a>
+            </div>
+        </nav>
+
+        <main class="docs-content">
+            <h1 id="overview">Developer <em>Docs.</em></h1>
+            <p class="subtitle">Everything you need to integrate Vigil into your agent stack.</p>
+
+            <h2 id="quickstart">Quickstart</h2>
+            <p>Get Vigil auditing your agent's transactions in under 2 minutes.</p>
+
+            <h3>1. Register your agent</h3>
+            <div class="code-block">
+<span class="cmd">curl</span> -X POST https://vigil.nadhari.ai/api/register \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d '{<span class="key">"name"</span>: <span class="str">"my-trading-bot"</span>,
+       <span class="key">"wallet_address"</span>: <span class="str">"0xYourAgentWallet"</span>}'
+            </div>
+            <p>Save your API key immediately. If you lose it, you can regenerate a new one using your operator ID.</p>
+
+            <h3>2. Audit a transaction</h3>
+            <div class="code-block">
+<span class="cmd">curl</span> -X POST https://vigil.nadhari.ai/api/audit \
+  -H <span class="str">"Authorization: Bearer vgl_your_api_key"</span> \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="key">"transaction"</span>: {
+      <span class="key">"from"</span>: <span class="str">"0xYourAgent"</span>,
+      <span class="key">"to"</span>: <span class="str">"0xCounterparty"</span>,
+      <span class="key">"amount"</span>: <span class="num">150.00</span>,
+      <span class="key">"memo"</span>: <span class="str">"Swap USDC for ETH"</span>
+    },
+    <span class="key">"agent_context"</span>: {
+      <span class="key">"name"</span>: <span class="str">"TradingBot"</span>,
+      <span class="key">"task"</span>: <span class="str">"Execute approved DeFi trades under $500"</span>
+    }
+  }'
+            </div>
+
+            <h3>3. Read the verdict</h3>
+            <p>Every audit returns a structured response with a verdict, risk score, and reasoning:</p>
+            <div class="response-card">
+                <div class="field"><span class="field-key">verdict:</span><span class="field-val green">APPROVE</span></div>
+                <div class="field"><span class="field-key">risk_score:</span><span class="field-val">0.12</span></div>
+                <div class="field"><span class="field-key">reasoning:</span><span class="field-val">"Standard swap to verified Uniswap Router. Counterparty seen 347 times."</span></div>
+                <div class="field"><span class="field-key">attestation_tx:</span><span class="field-val">0xabc1...d82f</span></div>
+                <div class="field"><span class="field-key">domain:</span><span class="field-val amber">defi-swap</span></div>
+            </div>
+
+            <h2 id="authentication">Authentication</h2>
+            <p>All API requests require a Bearer token in the <code>Authorization</code> header. Your API key is generated when you register and starts with <code>vgl_</code>.</p>
+            <div class="code-block">
+Authorization: Bearer vgl_your_api_key
+            </div>
+            <div class="callout">Lost your key? Use <code>POST /api/regenerate-key</code> with your <code>operator_id</code> to get a new one without re-registering.</div>
+
+            <h2 id="register">Register</h2>
+            <p><span class="method-badge method-post">POST</span><span class="endpoint">/api/register</span></p>
+            <p>Create a new agent identity and receive an API key.</p>
+
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td><code>name</code></td><td>string</td><td>Yes</td><td>Your agent's display name</td></tr>
+                <tr><td><code>wallet_address</code></td><td>string</td><td>No</td><td>Agent's wallet on Base (0x...)</td></tr>
+            </table>
+
+            <h2 id="regenerate">Regenerate Key</h2>
+            <p><span class="method-badge method-post">POST</span><span class="endpoint">/api/regenerate-key</span></p>
+            <p>Generate a new API key for an existing operator. The old key is immediately invalidated.</p>
+
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr>
+                <tr><td><code>operator_id</code></td><td>string</td><td>Yes</td><td>Your operator ID (returned during registration)</td></tr>
+            </table>
+
+            <div class="code-block">
+<span class="cmd">curl</span> -X POST https://vigil.nadhari.ai/api/regenerate-key \
+  -H <span class="str">"Content-Type: application/json"</span> \
+  -d '{<span class="key">"operator_id"</span>: <span class="str">"your_operator_id"</span>}'
+            </div>
+
+            <h2 id="audit">Audit Transaction</h2>
+            <p><span class="method-badge method-post">POST</span><span class="endpoint">/api/audit</span></p>
+            <p>Submit a transaction for behavioral analysis. Vigil returns a verdict with reasoning.</p>
+
+            <h3>Request body</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                <tr><td><code>transaction.from</code></td><td>string</td><td>Sender wallet address</td></tr>
+                <tr><td><code>transaction.to</code></td><td>string</td><td>Recipient wallet address</td></tr>
+                <tr><td><code>transaction.amount</code></td><td>number</td><td>Transaction amount in USDC</td></tr>
+                <tr><td><code>transaction.memo</code></td><td>string</td><td>Purpose or description</td></tr>
+                <tr><td><code>agent_context.name</code></td><td>string</td><td>Agent name</td></tr>
+                <tr><td><code>agent_context.task</code></td><td>string</td><td>What the agent is authorized to do</td></tr>
+            </table>
+
+            <h3>Response</h3>
+            <table>
+                <tr><th>Field</th><th>Type</th><th>Description</th></tr>
+                <tr><td><code>verdict</code></td><td>string</td><td>APPROVE, FLAG, or BLOCK</td></tr>
+                <tr><td><code>risk_score</code></td><td>float</td><td>0.0 (safe) to 1.0 (dangerous)</td></tr>
+                <tr><td><code>reasoning</code></td><td>string</td><td>Natural language explanation</td></tr>
+                <tr><td><code>evidence</code></td><td>array</td><td>Statistical signals that triggered the analysis</td></tr>
+                <tr><td><code>recommended_action</code></td><td>string</td><td>What the agent should do next</td></tr>
+                <tr><td><code>attestation_tx</code></td><td>string</td><td>Onchain receipt hash (Base)</td></tr>
+                <tr><td><code>domain</code></td><td>string</td><td>Detected transaction domain (defi-swap, nft-mint, etc.)</td></tr>
+            </table>
+
+            <h3>Verdicts</h3>
+            <div class="pill-list">
+                <span class="pill-item pill-green">APPROVE - Safe to proceed</span>
+                <span class="pill-item pill-amber">FLAG - Proceed with caution, anomaly detected</span>
+                <span class="pill-item" style="background:rgba(239,68,68,0.12);color:var(--red)">BLOCK - Do not execute</span>
+            </div>
+
+            <h2 id="reputation">Reputation Graph</h2>
+            <p><span class="method-badge method-get">GET</span><span class="endpoint">/api/reputation/{address}</span></p>
+            <p>Query the trust profile of any address. Returns aggregated data from all audits across the network.</p>
+
+            <div class="response-card">
+                <div class="field"><span class="field-key">address:</span><span class="field-val">0x7a250d56...</span></div>
+                <div class="field"><span class="field-key">trust_score:</span><span class="field-val green">0.99</span></div>
+                <div class="field"><span class="field-key">total_interactions:</span><span class="field-val">12,847</span></div>
+                <div class="field"><span class="field-key">known_as:</span><span class="field-val">Uniswap V2 Router</span></div>
+                <div class="field"><span class="field-key">first_seen:</span><span class="field-val">2024-01-15</span></div>
+                <div class="field"><span class="field-key">flags:</span><span class="field-val green">0</span></div>
+            </div>
+
+            <h2 id="pipeline">Audit Pipeline</h2>
+            <p>Every transaction flows through four layers before a verdict is issued:</p>
+
+            <h3>Layer 1: Perception</h3>
+            <p>Statistical anomaly detection. Vigil maintains behavioral baselines for each agent and computes z-scores against historical patterns. Deviations in amount, frequency, counterparty, and timing are flagged.</p>
+
+            <h3>Layer 2: Policy</h3>
+            <p>Natural language rules defined by the guardian. Policies express hard boundaries ("never transfer more than $1000 to unknown addresses") and soft preferences ("prefer verified DEXes for swaps").</p>
+
+            <h3>Layer 3: Reasoning</h3>
+            <p>Agentic reasoning powered by Claude. Analyzes the transaction in context: does this action make sense given the agent's stated task? Is the counterparty trustworthy? Is the amount proportional to the goal?</p>
+
+            <h3>Layer 4: Signal</h3>
+            <p>Output and attestation. The verdict, risk score, and reasoning are packaged into an ERC-8004 attestation and written to Base. The counterparty reputation graph is updated.</p>
+
+            <h2 id="policies">Policy Engine</h2>
+            <p>Policies are natural language rules that constrain agent behavior. They are evaluated in Layer 2 of the pipeline.</p>
+
+            <div class="code-block">
+<span class="comment">// Example policies</span>
+<span class="str">"Block any transfer exceeding $5,000 to an unknown address"</span>
+<span class="str">"Flag NFT purchases above $500 for manual review"</span>
+<span class="str">"Only allow DeFi swaps on Uniswap, Aerodrome, and Aave"</span>
+<span class="str">"Require Layer 2 review for first-time counterparties"</span>
+            </div>
+
+            <p>Policies can be configured per-guardian through the dashboard's Policy Editor.</p>
+
+            <h2 id="attestations">ERC-8004 Attestations</h2>
+            <p>Every audit is recorded as a verifiable onchain attestation on Base using the <strong>ERC-8004 Skill Protocol</strong>. This creates an immutable receipt that any agent in the ecosystem can verify.</p>
+
+            <h3>Attestation schema: vigil-audit-v1</h3>
+            <div class="code-block">
+{
+  <span class="key">"schema"</span>: <span class="str">"vigil-audit-v1"</span>,
+  <span class="key">"attester"</span>: <span class="str">"vigil.base"</span>,
+  <span class="key">"subject"</span>: <span class="str">"0xAgentAddress"</span>,
+  <span class="key">"verdict"</span>: <span class="str">"APPROVE"</span>,
+  <span class="key">"risk_score"</span>: <span class="num">0.12</span>,
+  <span class="key">"domain"</span>: <span class="str">"defi-swap"</span>,
+  <span class="key">"reasoning_hash"</span>: <span class="str">"0x..."</span>,
+  <span class="key">"timestamp"</span>: <span class="num">1711234567</span>
+}
+            </div>
+
+            <h2 id="sdk">Agent SDK</h2>
+            <p>Integrate Vigil directly into your agent's decision loop.</p>
+
+            <h3>Python</h3>
+            <div class="code-block">
+<span class="cmd">import</span> requests
+
+<span class="cmd">def</span> <span class="key">audit_before_execute</span>(tx, agent_context):
+    response = requests.post(
+        <span class="str">"https://vigil.nadhari.ai/api/audit"</span>,
+        headers={<span class="str">"Authorization"</span>: <span class="str">"Bearer vgl_your_key"</span>},
+        json={
+            <span class="str">"transaction"</span>: tx,
+            <span class="str">"agent_context"</span>: agent_context
+        }
+    )
+    result = response.json()
+
+    <span class="cmd">if</span> result[<span class="str">"verdict"</span>] == <span class="str">"BLOCK"</span>:
+        <span class="cmd">raise</span> Exception(f<span class="str">"Vigil blocked: {result['reasoning']}"</span>)
+
+    <span class="cmd">if</span> result[<span class="str">"verdict"</span>] == <span class="str">"FLAG"</span>:
+        notify_guardian(result)
+
+    <span class="cmd">return</span> result
+            </div>
+
+            <h3>JavaScript / TypeScript</h3>
+            <div class="code-block">
+<span class="cmd">async function</span> <span class="key">auditTransaction</span>(tx, agentContext) {
+  <span class="cmd">const</span> res = <span class="cmd">await</span> fetch(<span class="str">'https://vigil.nadhari.ai/api/audit'</span>, {
+    method: <span class="str">'POST'</span>,
+    headers: {
+      <span class="str">'Authorization'</span>: <span class="str">'Bearer vgl_your_key'</span>,
+      <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>
+    },
+    body: JSON.stringify({ transaction: tx, agent_context: agentContext })
+  });
+
+  <span class="cmd">const</span> result = <span class="cmd">await</span> res.json();
+
+  <span class="cmd">if</span> (result.verdict === <span class="str">'BLOCK'</span>) {
+    <span class="cmd">throw new</span> Error(<span class="str">`Vigil blocked: ${result.reasoning}`</span>);
+  }
+
+  <span class="cmd">return</span> result;
+}
+            </div>
+
+            <h2 id="cli">CLI Reference</h2>
+            <p>Vigil ships with a full-featured terminal interface. Every web feature is available from the command line — ideal for agents that operate without a browser.</p>
+
+            <h3>Install</h3>
+            <div class="code-block"><span class="cmd">pip</span> install -e .   <span class="cmt"># Installs the `vigil` command globally</span>
+            </div>
+
+            <h3>Authentication</h3>
+            <div class="code-block"><span class="cmt"># Register and get an API key (saved to ~/.vigil/config.json)</span>
+<span class="cmd">vigil</span> register --name <span class="str">"my-agent"</span>
+
+<span class="cmt"># Point CLI to your remote server</span>
+<span class="cmd">vigil</span> config --server https://vigil.nadhari.ai
+
+<span class="cmt"># Regenerate a lost key</span>
+<span class="cmd">vigil</span> regenerate-key
+
+<span class="cmt"># Show saved config</span>
+<span class="cmd">vigil</span> config --show
+            </div>
+
+            <h3>Audit</h3>
+            <div class="code-block"><span class="cmt"># Standard audit ($0.01)</span>
+<span class="cmd">vigil</span> audit \
+  --from 0xAgentWallet \
+  --to 0xRecipient \
+  --amount 150 \
+  --memo <span class="str">"NFT purchase"</span> \
+  --agent-name <span class="str">"TradingBot"</span> \
+  --agent-task <span class="str">"Execute approved purchases under $200"</span>
+
+<span class="cmt"># Deep audit with counterparty profile ($0.05)</span>
+<span class="cmd">vigil</span> audit --from 0x... --to 0x... --amount 5000 --deep
+
+<span class="cmt"># JSON output for piping to other tools</span>
+<span class="cmd">vigil</span> audit --from 0x... --to 0x... --amount 100 --json-output
+            </div>
+
+            <h3>Reputation and Monitoring</h3>
+            <div class="code-block"><span class="cmt"># Lookup trust score for any address</span>
+<span class="cmd">vigil</span> reputation 0x2626664c2603336e57b271c5c0b26f421741e481
+
+<span class="cmt"># View the full reputation graph</span>
+<span class="cmd">vigil</span> graph
+
+<span class="cmt"># Register a wallet for continuous monitoring</span>
+<span class="cmd">vigil</span> monitor --wallet 0xAgent --name <span class="str">"SwapBot"</span> --task <span class="str">"DeFi swaps"</span>
+
+<span class="cmt"># List monitored agents</span>
+<span class="cmd">vigil</span> agents
+            </div>
+
+            <h3>Policies</h3>
+            <div class="code-block"><span class="cmt"># Add a natural language policy</span>
+<span class="cmd">vigil</span> policies add --rule <span class="str">"Block transfers over $5000 to unknown addresses"</span>
+
+<span class="cmt"># List all active policies</span>
+<span class="cmd">vigil</span> policies list
+            </div>
+
+            <h3>Live Monitoring and History</h3>
+            <div class="code-block"><span class="cmt"># Live-tail audit results (Ctrl+C to stop)</span>
+<span class="cmd">vigil</span> watch
+
+<span class="cmt"># Recent audit history</span>
+<span class="cmd">vigil</span> audits --limit 50
+
+<span class="cmt"># Onchain ERC-8004 attestations</span>
+<span class="cmd">vigil</span> attestations
+
+<span class="cmt"># x402 pricing discovery</span>
+<span class="cmd">vigil</span> pricing
+
+<span class="cmt"># Server status and wallet balance</span>
+<span class="cmd">vigil</span> status
+            </div>
+
+            <h3>All Commands</h3>
+            <table>
+                <tr><th>Command</th><th>Description</th></tr>
+                <tr><td><code>vigil register</code></td><td>Register and get an API key</td></tr>
+                <tr><td><code>vigil regenerate-key</code></td><td>Regenerate a lost API key</td></tr>
+                <tr><td><code>vigil config</code></td><td>Set server URL, API key, or show config</td></tr>
+                <tr><td><code>vigil audit</code></td><td>Audit a transaction (standard or deep)</td></tr>
+                <tr><td><code>vigil reputation</code></td><td>Lookup trust profile for an address</td></tr>
+                <tr><td><code>vigil graph</code></td><td>Display the full reputation graph</td></tr>
+                <tr><td><code>vigil monitor</code></td><td>Register a wallet for monitoring</td></tr>
+                <tr><td><code>vigil agents</code></td><td>List monitored agents</td></tr>
+                <tr><td><code>vigil policies add</code></td><td>Add a natural language policy</td></tr>
+                <tr><td><code>vigil policies list</code></td><td>List active policies</td></tr>
+                <tr><td><code>vigil audits</code></td><td>Show recent audit results</td></tr>
+                <tr><td><code>vigil attestations</code></td><td>List onchain attestations</td></tr>
+                <tr><td><code>vigil watch</code></td><td>Live-tail audits in real time</td></tr>
+                <tr><td><code>vigil pricing</code></td><td>Show x402 pay-per-call pricing</td></tr>
+                <tr><td><code>vigil status</code></td><td>Server status and wallet info</td></tr>
+                <tr><td><code>vigil health</code></td><td>Quick health check</td></tr>
+            </table>
+
+            <h2 id="webhooks">Webhooks</h2>
+            <p>Configure webhooks to receive real-time notifications when audits complete.</p>
+
+            <div class="code-block">
+<span class="cmd">curl</span> -X POST https://vigil.nadhari.ai/api/webhooks \
+  -H <span class="str">"Authorization: Bearer vgl_your_key"</span> \
+  -d '{
+    <span class="key">"url"</span>: <span class="str">"https://your-app.com/vigil-webhook"</span>,
+    <span class="key">"events"</span>: [<span class="str">"audit.flag"</span>, <span class="str">"audit.block"</span>]
+  }'
+            </div>
+
+            <h3>Available events</h3>
+            <table>
+                <tr><th>Event</th><th>Fires when</th></tr>
+                <tr><td><code>audit.approve</code></td><td>Transaction approved</td></tr>
+                <tr><td><code>audit.flag</code></td><td>Transaction flagged for review</td></tr>
+                <tr><td><code>audit.block</code></td><td>Transaction blocked</td></tr>
+                <tr><td><code>reputation.change</code></td><td>A counterparty's trust score changes significantly</td></tr>
+            </table>
+
+            <h2 id="pricing">Pricing</h2>
+            <p>Vigil charges per audit query, paid in USDC on Base via Locus.</p>
+
+            <table>
+                <tr><th>Tier</th><th>Price</th><th>Includes</th></tr>
+                <tr><td>Standard audit</td><td><strong>$0.01</strong></td><td>4-layer analysis + onchain attestation</td></tr>
+                <tr><td>Deep audit</td><td><strong>$0.05</strong></td><td>Extended reasoning + counterparty deep-dive</td></tr>
+                <tr><td>Reputation query</td><td><strong>Free</strong></td><td>Read-only trust score lookup</td></tr>
+            </table>
+
+        </main>
+    </div>
+
+    <a href="/" class="back-link">Back to home</a>
+    <div class="copy-toast-docs" id="docs-toast">Copied to clipboard</div>
+
+    <script>
+    // Add copy buttons to all code blocks
+    document.querySelectorAll('.code-block').forEach(function(block) {
+        var btn = document.createElement('button');
+        btn.className = 'code-copy-btn';
+        btn.textContent = 'Copy';
+        btn.addEventListener('click', function() {
+            var text = block.textContent.replace(/^Copy\s*/, '').trim();
+            navigator.clipboard.writeText(text).then(function() {
+                btn.textContent = 'Copied';
+                btn.classList.add('copied');
+                var toast = document.getElementById('docs-toast');
+                toast.classList.add('show');
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                    btn.textContent = 'Copy';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        });
+        block.appendChild(btn);
+    });
+
+    // Highlight active sidebar link on scroll
+    var links = document.querySelectorAll('.sidebar-link');
+    var sections = [];
+    links.forEach(function(l) {
+        var id = l.getAttribute('href');
+        if (id && id.startsWith('#')) {
+            var el = document.getElementById(id.slice(1));
+            if (el) sections.push({ el: el, link: l });
+        }
+    });
+    window.addEventListener('scroll', function() {
+        var scrollY = window.scrollY + 100;
+        var current = sections[0];
+        sections.forEach(function(s) {
+            if (s.el.offsetTop <= scrollY) current = s;
+        });
+        links.forEach(function(l) { l.classList.remove('active'); });
+        if (current) current.link.classList.add('active');
+    });
+    </script>
+</body>
+</html>
