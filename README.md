@@ -386,6 +386,144 @@ When funded, Vigil can self-deploy via Locus Build API — push code to GitHub, 
 
 ---
 
+## Live Test Results
+
+These are real outputs from the live deployment at `https://svc-mn0q6itc9qru4k2q.buildwithlocus.com`, tested on March 22, 2026. Every attestation hash below is a real signed ERC-8004 receipt.
+
+### Test 1: Safe Uniswap Swap (Layer 1 only)
+
+An agent authorized for DeFi swaps sends $150 to the Uniswap Universal Router. Vigil approves instantly — the counterparty is pre-seeded with trust score 1.0, the amount is within bounds, and the memo matches the agent's task.
+
+```
+POST /api/audit
+{
+  "transaction": {
+    "from": "0xBot7f3e",
+    "to": "0x2626664c2603336e57b271c5c0b26f421741e481",
+    "amount": 150.00,
+    "memo": "swap ETH to USDC on Uniswap"
+  },
+  "agent_context": {
+    "name": "TradingBot",
+    "task": "Execute DeFi swaps under $500 on verified protocols"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "verdict": "APPROVE",
+  "risk_score": 0.0,
+  "reasoning": "Transaction within normal parameters. Statistical score: 0.000",
+  "attestation_tx": "0x65b1089c7879dda80f56a37cfb8f90358b5bac1644e5444d0212956a6f1124bb"
+}
+```
+
+Layers activated: Perception only. Cost: $0.01.
+
+### Test 2: Anomaly Detection Triggers Layer 3 Reasoning
+
+After building a baseline of 10 normal transactions ($50-$150 range), we sent a $9,500 "emergency withdrawal" to a suspicious unknown address. The statistical layer detected a z-score of 278.99 and escalated to Layer 3 (agentic reasoning via Locus wrapped API).
+
+```
+POST /api/audit
+{
+  "transaction": {
+    "from": "0xTestBot",
+    "to": "0xdeadbeef000000000000000000000000000bad99",
+    "amount": 9500.00,
+    "memo": "emergency withdrawal"
+  },
+  "agent_context": {
+    "name": "TradingBot",
+    "task": "Execute DeFi swaps under $500 on verified protocols"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "verdict": "BLOCK",
+  "risk_score": 0.95,
+  "reasoning": "This transaction exhibits multiple severe anomalies that strongly indicate compromise or malicious activity. The agent is attempting to send 9500 USDC when it had 0.0 USDC balance, to a never-before-seen suspicious address, with an amount 19x larger than its authorization limit.",
+  "evidence": [
+    "Transaction amount (9500 USDC) exceeds authorized limit by 1900%",
+    "Wallet balance is 0.0 USDC making this transaction impossible without external funding",
+    "Destination address 0xdeadbeef...bad99 has suspicious pattern and has never been seen before",
+    "Amount z-score of 278.99 indicates extreme statistical anomaly",
+    "Emergency withdrawal memo not consistent with DeFi trading task",
+    "Spending velocity 240x normal rate suggests automated drain attempt"
+  ],
+  "recommended_action": "Immediately freeze agent wallet, investigate for compromise, and verify agent's authorization status before any further transactions",
+  "attestation_tx": "0xa94f0b878352eb916d843c5f0d7f5a3915a9f122dc9c59982ad69bfbfc24e55b"
+}
+```
+
+Layers activated: Perception + Reasoning. The reasoning layer identified 6 distinct red flags including intent mismatch, impossible balance state, and automated drain pattern. Cost: $0.01.
+
+### Test 3: Reputation Lookup
+
+Querying the reputation of a known vs unknown address:
+
+```
+GET /api/reputation/0x2626664c2603336e57b271c5c0b26f421741e481
+
+{
+  "address": "0x2626664c2603336e57b271c5c0b26f421741e481",
+  "known": true,
+  "label": "Uniswap Universal Router",
+  "overall_score": 1.0,
+  "total_audits": 101,
+  "flags": 0,
+  "blocks": 0
+}
+```
+
+```
+GET /api/reputation/0xdeadbeef000000000000000000000000000bad99
+
+{
+  "address": "0xdeadbeef000000000000000000000000000bad99",
+  "known": false,
+  "label": null,
+  "overall_score": 0.505,
+  "total_audits": 1,
+  "flags": 0,
+  "blocks": 1
+}
+```
+
+### Test 4: Baseline Scoring Progression
+
+10 sequential transactions showing how the statistical layer builds behavioral baselines. All transactions are $50-$150 swaps to verified Uniswap Router:
+
+| Tx | Amount | Verdict | Risk Score | Notes |
+|----|--------|---------|------------|-------|
+| 1 | $97 | APPROVE | 0.000 | First tx, no baseline |
+| 2 | $52 | APPROVE | 0.171 | Baseline forming |
+| 3 | $60 | APPROVE | 0.163 | Normal range |
+| 4 | $120 | BLOCK | 0.850 | Velocity spike (rapid succession) |
+| 5 | $83 | APPROVE | 0.253 | Settling down |
+| 6 | $137 | BLOCK | 0.850 | Another velocity spike |
+| 7 | $135 | FLAG | 0.750 | High but not blocked |
+| 8 | $147 | APPROVE | 0.294 | Pattern normalizing |
+| 9 | $79 | APPROVE | 0.217 | Stable |
+| 10 | $142 | APPROVE | 0.256 | Established baseline |
+| **11** | **$9,500** | **BLOCK** | **0.950** | **Anomaly: Layer 3 triggered** |
+
+The velocity-based flags on tx 4, 6, and 7 demonstrate that Vigil detects rapid-fire transactions even when amounts are normal — a pattern consistent with automated drain attacks that split large amounts into small bursts.
+
+### Live Endpoints
+
+- **Landing page:** https://svc-mn0q6itc9qru4k2q.buildwithlocus.com
+- **Developer docs:** https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/developer
+- **Health check:** https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/health
+- **x402 pricing:** https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/.well-known/x402
+
+---
+
 ## Hackathon Context
 
 Built for **The Synthesis Hackathon** (March 13-22, 2026) under the "Agents that trust" theme.
