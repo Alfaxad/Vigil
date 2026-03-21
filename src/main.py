@@ -279,6 +279,10 @@ async def request_audit(request: Request):
         history=history,
     )
 
+    # Add to tx history so future audits have baseline
+    if monitor_service:
+        monitor_service._tx_history.append(tx)
+
     return {
         "verdict": result.verdict.value,
         "risk_score": round(result.risk_score, 4),
@@ -381,6 +385,10 @@ async def deep_audit(request: Request):
         agent_task=agent_context.get("task", ""),
         history=history,
     )
+
+    # Add to tx history so future audits have baseline
+    if monitor_service:
+        monitor_service._tx_history.append(tx)
 
     # Counterparty profile
     counterparty = reputation_graph.get_address_reputation(tx.to_address or "")
