@@ -349,6 +349,7 @@
             <a href="#pipeline" class="sidebar-link">Audit Pipeline</a>
             <a href="#policies" class="sidebar-link">Policy Engine</a>
             <a href="#attestations" class="sidebar-link">ERC-8004 Attestations</a>
+            <a href="#x402" class="sidebar-link">x402 Payments</a>
 
             <div class="sidebar-label">Integration</div>
             <a href="#sdk" class="sidebar-link">Agent SDK</a>
@@ -441,6 +442,8 @@ Authorization: Bearer vgl_your_api_key
             <h2 id="audit">Audit Transaction</h2>
             <p><span class="method-badge method-post">POST</span><span class="endpoint">/api/audit</span></p>
             <p>Submit a transaction for behavioral analysis. Vigil returns a verdict with reasoning.</p>
+            <p style="margin-top:8px;"><strong>Auth:</strong> Requires <code>Authorization: Bearer &lt;api_key&gt;</code>. Without auth, returns <code>402 Payment Required</code> with x402-compatible pricing for pay-per-call agents.</p>
+            <p><strong>Policy check:</strong> All active guardian policies are evaluated before the audit pipeline runs. If a hard rule is violated, the transaction is immediately blocked.</p>
 
             <h3>Request body</h3>
             <table>
@@ -501,7 +504,8 @@ Authorization: Bearer vgl_your_api_key
             <p>Output and attestation. The verdict, risk score, and reasoning are packaged into an ERC-8004 attestation and written to Base. The counterparty reputation graph is updated.</p>
 
             <h2 id="policies">Policy Engine</h2>
-            <p>Policies are natural language rules that constrain agent behavior. They are evaluated in Layer 2 of the pipeline.</p>
+            <p>Policies are natural language rules that constrain agent behavior. They are <strong>enforced before every audit</strong> — if a hard rule is violated, the transaction is immediately blocked without running the full pipeline.</p>
+            <p>Policies support amount-based rules (e.g. "block over $5,000") and keyword-based rules (e.g. "block bridge transactions"). Create, edit, enable/disable, and delete policies through the dashboard or API.</p>
 
             <div class="code-block">
 <span class="comment">// Example policies</span>
@@ -529,6 +533,25 @@ Authorization: Bearer vgl_your_api_key
   <span class="key">"timestamp"</span>: <span class="num">1711234567</span>
 }
             </div>
+
+            <h2 id="x402">x402 Pay-Per-Call</h2>
+            <p>Vigil supports the <strong>x402 payment protocol</strong>. Agents without an API key can pay per audit call using USDC on Base.</p>
+
+            <h3>How it works</h3>
+            <p>1. Agent calls <code>/api/audit</code> without auth</p>
+            <p>2. Vigil returns <code>402 Payment Required</code> with pricing:</p>
+            <div class="code-block">{
+  <span class="key">"error"</span>: <span class="str">"Payment required"</span>,
+  <span class="key">"pricing"</span>: { <span class="key">"price"</span>: <span class="str">"0.01"</span>, <span class="key">"currency"</span>: <span class="str">"USDC"</span> },
+  <span class="key">"payment_address"</span>: <span class="str">"0xa2cec58dd199c392a4b2cd86f48fd620bb2040ff"</span>,
+  <span class="key">"accepts"</span>: [<span class="str">"locus-x402"</span>, <span class="str">"direct-usdc"</span>]
+}</div>
+            <p>3. Agent pays via Locus x402 or sends USDC directly, then retries with payment header</p>
+            <p>4. Vigil processes the audit and returns the verdict</p>
+
+            <h3>Pricing discovery</h3>
+            <div class="code-block"><span class="cmd">curl</span> https://vigil.nadhari.ai/.well-known/x402</div>
+            <p>Returns pricing for all endpoints. Standard audit: <strong>$0.01</strong>. Deep audit: <strong>$0.05</strong>. Reputation lookups: <strong>free</strong> (API key required).</p>
 
             <h2 id="sdk">Agent SDK</h2>
             <p>Integrate Vigil directly into your agent's decision loop.</p>

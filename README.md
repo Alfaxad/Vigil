@@ -289,7 +289,13 @@ When auditing DeFi swap transactions, Vigil verifies the target address against 
 Every audit produces a signed attestation on Base using the ERC-8004 Skill Protocol. Attestations are immutable, verifiable, and form the foundation of the counterparty reputation graph.
 
 ### x402 Protocol — Trust as a Service
-Vigil exposes its audit endpoint as an x402 pay-per-call service. Any agent can discover pricing at `/.well-known/x402` and pay $0.01 USDC per audit query. This makes Vigil composable infrastructure — not just a tool, but a service layer.
+Vigil exposes its audit endpoint as an x402 pay-per-call service. Calling `/api/audit` without authentication returns `402 Payment Required` with x402-compatible pricing, payment address, and accepted payment methods. Any agent can:
+1. Discover pricing at `/.well-known/x402`
+2. Call `/api/audit` → receive `402` with `price: 0.01 USDC` and `payment_address`
+3. Pay via Locus x402 or direct USDC transfer
+4. Retry with payment header → receive audit verdict
+
+This makes Vigil composable infrastructure — not just a tool, but a service layer any agent can call and pay for programmatically.
 
 ---
 
