@@ -267,10 +267,24 @@ async def request_audit(request: Request):
     if not audit_engine:
         return JSONResponse({"error": "Not initialized"}, status_code=503)
 
-    # Auth required
+    # Auth: accept either API key OR x402 payment header
+    from src.integrations.x402 import extract_x402_payment
     api_key = _auth(request)
-    if not api_key:
-        return JSONResponse({"error": "Authorization: Bearer <api_key> required"}, status_code=401)
+    x402_payment = extract_x402_payment(dict(request.headers))
+
+    if not api_key and not x402_payment:
+        # Return 402 with pricing for x402-compatible agents
+        from src.integrations.x402 import get_audit_pricing
+        pricing = get_audit_pricing()
+        return JSONResponse(
+            {
+                "error": "Payment required",
+                "message": "Authenticate with Bearer API key or pay via x402 protocol",
+                "pricing": pricing["x402"]["endpoints"]["/api/audit"],
+                "payment_address": pricing["x402"]["payment_address"],
+            },
+            status_code=402,
+        )
 
     body = await request.json()
     tx_data = body.get("transaction", {})
@@ -402,9 +416,23 @@ async def deep_audit(request: Request):
     """Deep audit with trajectory analysis and counterparty graph lookup."""
     if not audit_engine or not reputation_graph:
         return JSONResponse({"error": "Not initialized"}, status_code=503)
+
+    from src.integrations.x402 import extract_x402_payment
     api_key = _auth(request)
-    if not api_key:
-        return JSONResponse({"error": "Authorization: Bearer <api_key> required"}, status_code=401)
+    x402_payment = extract_x402_payment(dict(request.headers))
+
+    if not api_key and not x402_payment:
+        from src.integrations.x402 import get_audit_pricing
+        pricing = get_audit_pricing()
+        return JSONResponse(
+            {
+                "error": "Payment required",
+                "message": "Authenticate with Bearer API key or pay via x402 protocol",
+                "pricing": pricing["x402"]["endpoints"]["/api/audit/deep"],
+                "payment_address": pricing["x402"]["payment_address"],
+            },
+            status_code=402,
+        )
 
     body = await request.json()
     tx_data = body.get("transaction", {})
