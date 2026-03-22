@@ -460,6 +460,17 @@
             .mini-stats { grid-template-columns: repeat(2, 1fr); }
             .mini-row { grid-template-columns: 1fr 1fr; }
             .nav-links { display: none; }
+            .hero h1 { font-size: clamp(32px, 8vw, 56px) !important; }
+            .hero p { font-size: 14px !important; padding: 0 16px; }
+            .features { padding: 60px 16px !important; }
+            .features-title { font-size: 28px !important; }
+            .api-section { padding: 40px 16px !important; }
+            .api-title { font-size: 28px !important; }
+            .code-block { font-size: 11px !important; overflow-x: auto; }
+            .rep-compare-grid { grid-template-columns: 1fr !important; }
+            .hero-buttons { flex-direction: column; align-items: center; gap: 12px !important; }
+            .hero-buttons .btn-primary, .hero-buttons .btn-secondary { width: 200px; text-align: center; }
+            .hide-mobile { display: none !important; }
         }
     </style>
 </head>
@@ -597,10 +608,10 @@
                 <!-- Reputation comparison -->
                 <div class="anim anim-2 liquid-glass-strong" style="border-radius:16px;padding:24px;margin-bottom:24px;">
                     <div style="font-family:'Inter',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);margin-bottom:16px;">Reputation Comparison</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                    <div class="rep-compare-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                         <div style="background:rgba(34,197,94,0.04);border:1px solid rgba(34,197,94,0.15);border-radius:12px;padding:16px;">
                             <div style="font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Known Contract</div>
-                            <div style="font-family:'SF Mono','Fira Code',monospace;font-size:11px;line-height:1.8;">
+                            <div style="font-family:'SF Mono','Fira Code',monospace;font-size:11px;line-height:1.8;word-break:break-all;">
                                 <div><span style="color:var(--text-muted)">address:</span> <span style="color:#818cf8;">0x2626664c...e481</span></div>
                                 <div><span style="color:var(--text-muted)">label:</span> <span style="color:var(--green);">Uniswap Universal Router</span></div>
                                 <div><span style="color:var(--text-muted)">trust:</span> <span style="color:var(--green);font-weight:700;font-size:18px;">1.00</span></div>
@@ -610,7 +621,7 @@
                         </div>
                         <div style="background:rgba(239,68,68,0.04);border:1px solid rgba(239,68,68,0.15);border-radius:12px;padding:16px;">
                             <div style="font-size:11px;color:var(--red);font-weight:600;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px;">Suspicious Address</div>
-                            <div style="font-family:'SF Mono','Fira Code',monospace;font-size:11px;line-height:1.8;">
+                            <div style="font-family:'SF Mono','Fira Code',monospace;font-size:11px;line-height:1.8;word-break:break-all;">
                                 <div><span style="color:var(--text-muted)">address:</span> <span style="color:#818cf8;">0xdeadbeef...bad99</span></div>
                                 <div><span style="color:var(--text-muted)">label:</span> <span style="color:var(--red);">unknown</span></div>
                                 <div><span style="color:var(--text-muted)">trust:</span> <span style="color:var(--red);font-weight:700;font-size:18px;">0.51</span></div>
@@ -632,7 +643,7 @@
                                     <th style="text-align:right;padding:8px 12px;color:var(--text-muted);font-weight:500;">Amount</th>
                                     <th style="text-align:center;padding:8px 12px;color:var(--text-muted);font-weight:500;">Verdict</th>
                                     <th style="text-align:right;padding:8px 12px;color:var(--text-muted);font-weight:500;">Risk</th>
-                                    <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-weight:500;">Notes</th>
+                                    <th class="hide-mobile" style="text-align:left;padding:8px 12px;color:var(--text-muted);font-weight:500;">Notes</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -787,7 +798,7 @@
         function resize() {
             var rect = canvas.parentElement.getBoundingClientRect();
             W = rect.width;
-            H = Math.max(260, W * 0.32);
+            H = W < 500 ? Math.max(300, W * 0.65) : Math.max(260, W * 0.32);
             canvas.width = W * dpr;
             canvas.height = H * dpr;
             canvas.style.height = H + 'px';
@@ -806,105 +817,155 @@
 
         function draw(ts) {
             ctx.clearRect(0, 0, W, H);
-            var pad = 80;
-            var boxW = Math.min(100, (W - pad*2) * 0.11);
-            var boxH = Math.min(48, H * 0.24);
-            var usable = W - pad * 2;
-            var gap = (usable - stages.length * boxW) / (stages.length - 1);
-            gap = Math.max(40, gap);
-            var totalSpan = stages.length * boxW + (stages.length - 1) * gap;
-            var startX = (W - totalSpan) / 2;
-            var cy = H * 0.35;
+            var isMobile = W < 500;
+            var pad = isMobile ? 40 : 80;
+            var boxes;
 
-            var boxes = stages.map(function(s, i) {
-                return { x: startX + i * (boxW + gap), y: cy - boxH / 2, w: boxW, h: boxH, color: s.color, label: s.label, sub: s.sub, letter: s.letter, layer: i + 1 };
-            });
+            if (isMobile) {
+                // Vertical layout
+                var boxW = 120;
+                var boxH = 36;
+                var vGap = 24;
+                var totalH = stages.length * boxH + (stages.length - 1) * vGap;
+                var startY = (H - totalH) / 2;
+                var cx = W / 2;
+                boxes = stages.map(function(s, i) {
+                    return { x: cx - boxW / 2, y: startY + i * (boxH + vGap), w: boxW, h: boxH, color: s.color, label: s.label, sub: s.sub, letter: s.letter, layer: i + 1 };
+                });
+            } else {
+                var boxW = Math.min(100, (W - pad*2) * 0.11);
+                var boxH = Math.min(48, H * 0.24);
+                var usable = W - pad * 2;
+                var gap = (usable - stages.length * boxW) / (stages.length - 1);
+                gap = Math.max(40, gap);
+                var totalSpan = stages.length * boxW + (stages.length - 1) * gap;
+                var startX = (W - totalSpan) / 2;
+                var cy = H * 0.35;
+                boxes = stages.map(function(s, i) {
+                    return { x: startX + i * (boxW + gap), y: cy - boxH / 2, w: boxW, h: boxH, color: s.color, label: s.label, sub: s.sub, letter: s.letter, layer: i + 1 };
+                });
+            }
 
             // Draw arrows between boxes
             for (var i = 0; i < boxes.length - 1; i++) {
-                var ax1 = boxes[i].x + boxW + 4;
-                var ax2 = boxes[i+1].x - 4;
-                var len = ax2 - ax1;
+                var col = lerpColor(boxes[i].color, boxes[i+1].color, 0.5);
 
-                // Glow
-                ctx.save();
-                ctx.globalAlpha = 0.06;
-                ctx.strokeStyle = lerpColor(boxes[i].color, boxes[i+1].color, 0.5);
-                ctx.lineWidth = 8;
-                ctx.shadowColor = ctx.strokeStyle;
-                ctx.shadowBlur = 12;
-                ctx.beginPath(); ctx.moveTo(ax1, cy); ctx.lineTo(ax2, cy); ctx.stroke();
-                ctx.restore();
+                if (isMobile) {
+                    // Vertical arrows
+                    var ay1 = boxes[i].y + boxes[i].h + 2;
+                    var ay2 = boxes[i+1].y - 2;
+                    var mx = boxes[i].x + boxes[i].w / 2;
+                    var vLen = ay2 - ay1;
 
-                // Base line
-                ctx.save();
-                ctx.globalAlpha = 0.2;
-                ctx.strokeStyle = lerpColor(boxes[i].color, boxes[i+1].color, 0.5);
-                ctx.lineWidth = 1.5;
-                ctx.beginPath(); ctx.moveTo(ax1, cy); ctx.lineTo(ax2, cy); ctx.stroke();
-                ctx.restore();
-
-                // Flowing dashes
-                ctx.save();
-                ctx.globalAlpha = 0.45;
-                ctx.strokeStyle = lerpColor(boxes[i].color, boxes[i+1].color, 0.5);
-                ctx.lineWidth = 2.5;
-                ctx.setLineDash([len * 0.15, len * 0.1]);
-                ctx.lineDashOffset = dashOffset;
-                ctx.lineCap = 'round';
-                ctx.beginPath(); ctx.moveTo(ax1, cy); ctx.lineTo(ax2, cy); ctx.stroke();
-                ctx.restore();
-
-                // Arrowhead at end
-                ctx.save();
-                ctx.fillStyle = boxes[i+1].color;
-                ctx.globalAlpha = 0.9;
-                ctx.beginPath();
-                ctx.moveTo(ax2, cy);
-                ctx.lineTo(ax2 - 8, cy - 4);
-                ctx.lineTo(ax2 - 8, cy + 4);
-                ctx.closePath();
-                ctx.fill();
-                ctx.restore();
-
-                // Animated chevrons
-                var numArr = 4;
-                for (var j = 0; j < numArr; j++) {
-                    var t = ((arrowT * numArr + j) / numArr) % 1;
-                    var px = ax1 + len * t;
-                    var op = Math.sin(t * Math.PI) * 0.7 + 0.1;
-                    var col = lerpColor(boxes[i].color, boxes[i+1].color, t);
-                    var sz = 6;
-
-                    // Glow
                     ctx.save();
-                    ctx.globalAlpha = op * 0.15;
-                    ctx.fillStyle = col;
-                    ctx.shadowColor = col;
-                    ctx.shadowBlur = 10;
-                    ctx.beginPath(); ctx.arc(px, cy, sz * 1.8, 0, Math.PI*2); ctx.fill();
+                    ctx.globalAlpha = 0.25;
+                    ctx.strokeStyle = col;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.moveTo(mx, ay1); ctx.lineTo(mx, ay2); ctx.stroke();
                     ctx.restore();
 
-                    // Chevron
+                    // Arrowhead down
                     ctx.save();
-                    ctx.globalAlpha = op * 0.85;
-                    ctx.fillStyle = col;
+                    ctx.fillStyle = boxes[i+1].color;
+                    ctx.globalAlpha = 0.9;
                     ctx.beginPath();
-                    ctx.moveTo(px - sz, cy - sz * 0.6);
-                    ctx.lineTo(px + sz, cy);
-                    ctx.lineTo(px - sz, cy + sz * 0.6);
+                    ctx.moveTo(mx, ay2);
+                    ctx.lineTo(mx - 4, ay2 - 8);
+                    ctx.lineTo(mx + 4, ay2 - 8);
                     ctx.closePath();
                     ctx.fill();
                     ctx.restore();
 
-                    // Trail
+                    // Animated dot
+                    var t = arrowT;
+                    var py = ay1 + vLen * t;
                     ctx.save();
-                    ctx.globalAlpha = op * 0.4;
-                    ctx.strokeStyle = col;
-                    ctx.lineWidth = 2;
-                    ctx.lineCap = 'round';
-                    ctx.beginPath(); ctx.moveTo(px - sz * 2.5, cy); ctx.lineTo(px - sz, cy); ctx.stroke();
+                    ctx.globalAlpha = 0.7;
+                    ctx.fillStyle = col;
+                    ctx.shadowColor = col;
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath(); ctx.arc(mx, py, 3, 0, Math.PI*2); ctx.fill();
                     ctx.restore();
+                } else {
+                    // Horizontal arrows
+                    var bW = boxes[i].w;
+                    var ax1 = boxes[i].x + bW + 4;
+                    var ax2 = boxes[i+1].x - 4;
+                    var cy2 = boxes[i].y + boxes[i].h / 2;
+                    var len = ax2 - ax1;
+
+                    ctx.save();
+                    ctx.globalAlpha = 0.06;
+                    ctx.strokeStyle = col;
+                    ctx.lineWidth = 8;
+                    ctx.shadowColor = col;
+                    ctx.shadowBlur = 12;
+                    ctx.beginPath(); ctx.moveTo(ax1, cy2); ctx.lineTo(ax2, cy2); ctx.stroke();
+                    ctx.restore();
+
+                    ctx.save();
+                    ctx.globalAlpha = 0.2;
+                    ctx.strokeStyle = col;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.moveTo(ax1, cy2); ctx.lineTo(ax2, cy2); ctx.stroke();
+                    ctx.restore();
+
+                    ctx.save();
+                    ctx.globalAlpha = 0.45;
+                    ctx.strokeStyle = col;
+                    ctx.lineWidth = 2.5;
+                    ctx.setLineDash([len * 0.15, len * 0.1]);
+                    ctx.lineDashOffset = dashOffset;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath(); ctx.moveTo(ax1, cy2); ctx.lineTo(ax2, cy2); ctx.stroke();
+                    ctx.restore();
+
+                    ctx.save();
+                    ctx.fillStyle = boxes[i+1].color;
+                    ctx.globalAlpha = 0.9;
+                    ctx.beginPath();
+                    ctx.moveTo(ax2, cy2);
+                    ctx.lineTo(ax2 - 8, cy2 - 4);
+                    ctx.lineTo(ax2 - 8, cy2 + 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+
+                    var numArr = 4;
+                    for (var j = 0; j < numArr; j++) {
+                        var t = ((arrowT * numArr + j) / numArr) % 1;
+                        var px = ax1 + len * t;
+                        var op = Math.sin(t * Math.PI) * 0.7 + 0.1;
+                        var cc = lerpColor(boxes[i].color, boxes[i+1].color, t);
+                        var sz = 6;
+
+                        ctx.save();
+                        ctx.globalAlpha = op * 0.15;
+                        ctx.fillStyle = cc;
+                        ctx.shadowColor = cc;
+                        ctx.shadowBlur = 10;
+                        ctx.beginPath(); ctx.arc(px, cy2, sz * 1.8, 0, Math.PI*2); ctx.fill();
+                        ctx.restore();
+
+                        ctx.save();
+                        ctx.globalAlpha = op * 0.85;
+                        ctx.fillStyle = cc;
+                        ctx.beginPath();
+                        ctx.moveTo(px - sz, cy2 - sz * 0.6);
+                        ctx.lineTo(px + sz, cy2);
+                        ctx.lineTo(px - sz, cy2 + sz * 0.6);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.restore();
+
+                        ctx.save();
+                        ctx.globalAlpha = op * 0.4;
+                        ctx.strokeStyle = cc;
+                        ctx.lineWidth = 2;
+                        ctx.lineCap = 'round';
+                        ctx.beginPath(); ctx.moveTo(px - sz * 2.5, cy2); ctx.lineTo(px - sz, cy2); ctx.stroke();
+                        ctx.restore();
+                    }
                 }
             }
 
@@ -955,18 +1016,20 @@
                 // Label
                 ctx.save();
                 ctx.fillStyle = b.color;
-                ctx.font = "700 14px 'Inter', sans-serif";
+                ctx.font = isMobile ? "700 12px 'Inter', sans-serif" : "700 14px 'Inter', sans-serif";
                 ctx.textAlign = 'center';
                 ctx.fillText(b.label, b.x + b.w/2, b.y + b.h/2 + 5);
                 ctx.restore();
 
-                // Subtitle below box
-                ctx.save();
-                ctx.fillStyle = '#a1a1aa';
-                ctx.font = "400 10px 'Inter', sans-serif";
-                ctx.textAlign = 'center';
-                ctx.fillText(b.sub, b.x + b.w/2, b.y + b.h + 28);
-                ctx.restore();
+                // Subtitle below box (desktop only)
+                if (!isMobile) {
+                    ctx.save();
+                    ctx.fillStyle = '#a1a1aa';
+                    ctx.font = "400 10px 'Inter', sans-serif";
+                    ctx.textAlign = 'center';
+                    ctx.fillText(b.sub, b.x + b.w/2, b.y + b.h + 28);
+                    ctx.restore();
+                }
             }
 
 
