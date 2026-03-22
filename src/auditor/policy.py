@@ -113,17 +113,39 @@ Translate this into a structured policy document."""
     def get_policy(self, agent_address: str) -> Optional[AgentPolicy]:
         return self._policies.get((agent_address or "").lower())
 
-    def check_hard_rules(self, agent_address: str, action: str, to_address: str) -> Optional[dict]:
-        policy = self.get_policy(agent_address)
-        if not policy or not policy.structured_policy:
-            return None
+    def check_hard_rules(self, to_address: str, amount: float, memo: str) -> dict:
+        """Check all policies' hard rules against a transaction. Returns {"blocked": bool, "reason": str}."""
+        for addr, policy in self._policies.items():
+            if not policy.structured_policy:
+                continue
+            for rule in policy.structured_policy.get("hard_rules", []):
+                rule_text = rule.get("condition", "").lower()
+                # Amount-based rules
+                if "amount" in rule_text or "$" in rule_text:
+                    try:
+                        import re
+                        nums = re.findall(r'[\d,]+\.?\d*', rule_text)
+                        if nums:
+                            limit = float(nums[-1].replace(",", ""))
+                            if ("exceed" in rule_text or "over" in rule_text or "above" in rule_text) and amount > limit:
+                                return {"blocked": True, "reason": rule.get("reason", f"Amount ${amount} exceeds policy limit ${limit}")}
+                    except (ValueError, IndexError):
+                        pass
+                # Keyword-based rules
+                if "block" in rule_text and any(kw in (memo or "").lower() for kw in ["bridge", "unknown", "mixer"]):
+                    if any(kw in rule_text for kw in ["bridge", "unknown", "mixer"]):
+                        return {"blocked": True, "reason": rule.get("reason", f"Transaction type blocked by policy")}
+        return {"blocked": False}
 
-        for rule in policy.structured_policy.get("hard_rules", []):
-            if rule.get("action", "").lower() in action.lower():
-                return {
-                    "blocked": True,
-                    "rule": rule,
-                    "verdict": rule.get("verdict", "BLOCK"),
-                    "reason": rule.get("reason", "Hard rule violation"),
-                }
-        return None
+    def get_all_policies(self) -> list[dict]:
+        """Return all policies for display."""
+        return [
+            {
+                "agent_address": p.agent_address,
+                "policy_text": p.policy_text,
+                "type": p.policy_type,
+                "active": p.active,
+                "created_at": p.created_at.isoformat(),
+            }
+            for p in self._policies.values()
+        ]

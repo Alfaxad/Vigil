@@ -2,6 +2,7 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
+from typing import Optional
 from fastapi import FastAPI, Request, Cookie
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -71,6 +72,17 @@ app = FastAPI(
 )
 
 templates = Jinja2Templates(directory="src/dashboard/templates")
+
+
+def _auth(request: Request) -> Optional[str]:
+    """Extract and validate API key from Bearer token. Returns key or None."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    api_key = auth[7:]
+    if guardian and guardian.get_operator_by_key(api_key):
+        return api_key
+    return None
 
 
 @app.get("/.well-known/x402")
@@ -222,9 +234,11 @@ async def get_status():
 
 
 @app.get("/api/audits")
-async def get_audits(limit: int = 50):
+async def get_audits(request: Request, limit: int = 50):
     if not monitor_service:
         return JSONResponse({"error": "Not initialized"}, status_code=503)
+    if not _auth(request):
+        return JSONResponse({"error": "Authorization: Bearer <api_key> required"}, status_code=401)
     audits = monitor_service.get_recent_audits(limit)
     return {
         "audits": [
@@ -253,6 +267,11 @@ async def request_audit(request: Request):
     if not audit_engine:
         return JSONResponse({"error": "Not initialized"}, status_code=503)
 
+    # Auth required
+    api_key = _auth(request)
+    if not api_key:
+        return JSONResponse({"error": "Authorization: Bearer <api_key> required"}, status_code=401)
+
     body = await request.json()
     tx_data = body.get("transaction", {})
     agent_context = body.get("agent_context", {})
@@ -269,6 +288,20 @@ async def request_audit(request: Request):
         timestamp=datetime.utcnow(),
     )
 
+    # Layer 2: Policy check before audit
+    if policy_engine:
+        policy_result = policy_engine.check_hard_rules(tx.to_address or "", tx.amount, tx.memo or "")
+        if policy_result.get("blocked"):
+            return {
+                "verdict": "BLOCK",
+                "risk_score": 1.0,
+                "reasoning": f"Blocked by policy: {policy_result['reason']}",
+                "evidence": [policy_result["reason"]],
+                "recommended_action": "Transaction blocked by guardian policy",
+                "attestation_tx": None,
+                "cost": "0.01 USDC",
+            }
+
     # Use monitor's tx history for better anomaly baseline
     history = list(monitor_service._tx_history) if monitor_service else []
 
@@ -283,6 +316,10 @@ async def request_audit(request: Request):
     if monitor_service:
         monitor_service._tx_history.append(tx)
 
+    # Update guardian stats for the operator's agents
+    if guardian:
+        guardian.record_audit(api_key, result.verdict.value)
+
     return {
         "verdict": result.verdict.value,
         "risk_score": round(result.risk_score, 4),
@@ -295,9 +332,11 @@ async def request_audit(request: Request):
 
 
 @app.get("/api/attestations")
-async def get_attestations(limit: int = 50):
+async def get_attestations(request: Request, limit: int = 50):
     if not audit_engine:
         return JSONResponse({"error": "Not initialized"}, status_code=503)
+    if not _auth(request):
+        return JSONResponse({"error": "Authorization: Bearer <api_key> required"}, status_code=401)
     attestations = audit_engine.attestor.get_attestations(limit)
     return {
         "attestations": attestations,
@@ -332,12 +371,13 @@ async def get_reputation_graph():
 
 
 @app.get("/api/reputation/{address}")
-async def get_reputation(address: str):
-    """Query trust profile for any address based on Vigil's attestation history."""
+async def get_reputation(request: Request, address: str):
+    """Query trust profile for any address based on Vigil's attestation history. Free."""
     if not reputation_graph:
         return JSONResponse({"error": "Not initialized"}, status_code=503)
+    if not _auth(request):
+        return JSONResponse({"error": "Authorization: Bearer <api_key> required"}, status_code=401)
     rep = reputation_graph.get_address_reputation(address)
-    rep["cost_usdc"] = 0.005
     return rep
 
 
@@ -346,6 +386,8 @@ async def create_policy(request: Request):
     """Create or update a natural language policy for an agent."""
     if not policy_engine:
         return JSONResponse({"error": "Not initialized"}, status_code=503)
+    if not _auth(request):
+        return JSONResponse({"error": "Authorization: Bearer <api_key> required"}, status_code=401)
     body = await request.json()
     agent_address = body.get("agent_address", "")
     policy_text = body.get("policy_text", "")
@@ -360,6 +402,9 @@ async def deep_audit(request: Request):
     """Deep audit with trajectory analysis and counterparty graph lookup."""
     if not audit_engine or not reputation_graph:
         return JSONResponse({"error": "Not initialized"}, status_code=503)
+    api_key = _auth(request)
+    if not api_key:
+        return JSONResponse({"error": "Authorization: Bearer <api_key> required"}, status_code=401)
 
     body = await request.json()
     tx_data = body.get("transaction", {})

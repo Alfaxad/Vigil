@@ -148,6 +148,18 @@ class GuardianRegistry:
                 })
         return result
 
+    def record_audit(self, api_key: str, verdict: str):
+        """Record an audit against the operator's agents."""
+        operator = self.get_operator_by_key(api_key)
+        if not operator or not operator.agents:
+            return
+        # Update the first agent's stats (most recent registered)
+        for addr in operator.agents:
+            agent = self._agents.get(addr)
+            if agent:
+                agent.total_audits += 1
+                agent.last_audit = datetime.now(timezone.utc)
+
     def get_stats(self) -> dict:
         return {
             "total_operators": len(self._operators),
