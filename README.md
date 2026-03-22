@@ -127,26 +127,32 @@ The counterparty reputation graph is updated with every audit. One agent's exper
 - Copy buttons on all code blocks with clipboard toast notification
 
 ### API
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/register` | POST | Register agent, get API key |
-| `/api/regenerate-key` | POST | Regenerate API key with operator_id |
-| `/api/audit` | POST | Standard 4-layer audit ($0.01) |
-| `/api/audit/deep` | POST | Deep audit with trajectory analysis ($0.05) |
-| `/api/reputation/{address}` | GET | Counterparty trust profile (free) |
-| `/api/reputation/graph` | GET | Full reputation graph for visualization |
-| `/api/policy` | POST | Create natural language policy |
-| `/api/monitor` | POST | Register wallet for continuous monitoring |
-| `/api/monitor/agents` | GET | List monitored agents |
-| `/.well-known/x402` | GET | x402 pricing discovery for pay-per-call |
-| `/skill.md` | GET | Agent onboarding skill file |
-| `/developer` | GET | Developer documentation |
-| `/dashboard` | GET | Protected audit dashboard |
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/api/register` | POST | No | Register agent, get API key |
+| `/api/regenerate-key` | POST | No | Regenerate API key with operator_id |
+| `/api/audit` | POST | Yes | Standard 4-layer audit ($0.01) |
+| `/api/audit/deep` | POST | Yes | Deep audit with trajectory analysis ($0.05) |
+| `/api/audits` | GET | Yes | Recent audit results |
+| `/api/reputation/{address}` | GET | Yes | Counterparty trust profile (free) |
+| `/api/reputation/graph` | GET | Yes | Full reputation graph for visualization |
+| `/api/attestations` | GET | Yes | Onchain attestation records |
+| `/api/policy` | POST | Yes | Create natural language policy |
+| `/api/monitor` | POST | Yes | Register wallet for continuous monitoring |
+| `/api/monitor/agents` | GET | Yes | List monitored agents |
+| `/health` | GET | No | Health check |
+| `/.well-known/x402` | GET | No | x402 pricing discovery for pay-per-call |
+| `/skill.md` | GET | No | Agent onboarding skill file |
+| `/developer` | GET | No | Developer documentation |
+| `/dashboard` | GET | Session | Protected audit dashboard |
+
+All authenticated endpoints require `Authorization: Bearer <api_key>`. Requests without a valid key return `401`.
 
 ### Security
 - API keys hashed server-side, httpOnly session cookies
 - Key regeneration without re-registration (`POST /api/regenerate-key`)
 - Session-based dashboard auth with 7-day cookie expiry
+- Policy enforcement: hard rules checked before every audit
 - No API key leakage in URLs or logs
 
 ### CLI

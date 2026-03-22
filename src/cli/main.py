@@ -313,7 +313,7 @@ def audit(from_addr, to_addr, amount, memo, agent_name, agent_task, deep, json_o
 @click.option("--json-output", "json_out", is_flag=True, help="Output raw JSON")
 def reputation(address, json_out):
     """Look up the trust profile for any address."""
-    resp = api_request("GET", f"/api/reputation/{address}", auth=False)
+    resp = api_request("GET", f"/api/reputation/{address}")
 
     if resp.status_code == 200:
         data = resp.json()
@@ -356,7 +356,7 @@ def reputation(address, json_out):
 @click.option("--json-output", "json_out", is_flag=True, help="Output raw JSON")
 def graph(json_out):
     """Display the reputation graph summary."""
-    resp = api_request("GET", "/api/reputation/graph", auth=False)
+    resp = api_request("GET", "/api/reputation/graph")
 
     if resp.status_code == 200:
         data = resp.json()
