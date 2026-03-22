@@ -1,6 +1,6 @@
 # Vigil — Agent Onboarding Skill
 
-> Base URL: `https://vigil.nadhari.ai`
+> Base URL: `https://svc-mn0q6itc9qru4k2q.buildwithlocus.com`
 
 You are an AI agent onboarding with **Vigil**, the trust layer for autonomous agent wallets. This document tells you everything you need to register, monitor wallets, and query Vigil's trust intelligence.
 
@@ -19,7 +19,7 @@ Vigil monitors agent wallets on Base, flags anomalous spending using a two-layer
 Your human needs a Vigil API key. One registration covers all their agents.
 
 ```bash
-curl -X POST https://vigil.nadhari.ai/api/register \
+curl -X POST https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/register \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Jane Doe",
@@ -42,7 +42,7 @@ Response:
 ### Step 2: Register Your Agent for Monitoring
 
 ```bash
-curl -X POST https://vigil.nadhari.ai/api/monitor \
+curl -X POST https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/monitor \
   -H "Authorization: Bearer vgl_abc123..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -68,7 +68,7 @@ Response:
 Define what your agent is allowed to do in plain English.
 
 ```bash
-curl -X POST https://vigil.nadhari.ai/api/policy \
+curl -X POST https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/policy \
   -H "Authorization: Bearer vgl_abc123..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -88,7 +88,7 @@ Vigil translates your natural language rules into structured policy with hard ru
 Any agent can query Vigil before executing a transaction.
 
 ```bash
-curl -X POST https://vigil.nadhari.ai/api/audit \
+curl -X POST https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/audit \
   -H "Content-Type: application/json" \
   -d '{
     "transaction": {
@@ -123,7 +123,7 @@ Verdicts: `APPROVE` (safe), `FLAG` (review recommended), `BLOCK` (do not proceed
 For high-stakes transactions, request a deep audit with counterparty analysis.
 
 ```bash
-curl -X POST https://vigil.nadhari.ai/api/audit/deep \
+curl -X POST https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/audit/deep \
   -H "Content-Type: application/json" \
   -d '{
     "transaction": {
@@ -146,7 +146,7 @@ Returns verdict + counterparty reputation profile + domain-specific trust scores
 Before interacting with an unknown address, check its trust profile.
 
 ```bash
-curl https://vigil.nadhari.ai/api/reputation/0xCounterpartyAddress
+curl https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/reputation/0xCounterpartyAddress
 ```
 
 Response:
@@ -216,7 +216,7 @@ All payments via x402 through Locus on Base.
 ```python
 import httpx
 
-VIGIL_URL = "https://vigil.nadhari.ai"
+VIGIL_URL = "https://svc-mn0q6itc9qru4k2q.buildwithlocus.com"
 
 async def check_before_sending(to_address, amount, memo, my_task):
     async with httpx.AsyncClient() as client:

@@ -371,7 +371,7 @@
 
             <h3>1. Register your agent</h3>
             <div class="code-block">
-<span class="cmd">curl</span> -X POST https://vigil.nadhari.ai/api/register \
+<span class="cmd">curl</span> -X POST https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/register \
   -H <span class="str">"Content-Type: application/json"</span> \
   -d '{<span class="key">"name"</span>: <span class="str">"my-trading-bot"</span>,
        <span class="key">"wallet_address"</span>: <span class="str">"0xYourAgentWallet"</span>}'
@@ -380,7 +380,7 @@
 
             <h3>2. Audit a transaction</h3>
             <div class="code-block">
-<span class="cmd">curl</span> -X POST https://vigil.nadhari.ai/api/audit \
+<span class="cmd">curl</span> -X POST https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/audit \
   -H <span class="str">"Authorization: Bearer vgl_your_api_key"</span> \
   -H <span class="str">"Content-Type: application/json"</span> \
   -d '{
@@ -434,7 +434,7 @@ Authorization: Bearer vgl_your_api_key
             </table>
 
             <div class="code-block">
-<span class="cmd">curl</span> -X POST https://vigil.nadhari.ai/api/regenerate-key \
+<span class="cmd">curl</span> -X POST https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/regenerate-key \
   -H <span class="str">"Content-Type: application/json"</span> \
   -d '{<span class="key">"operator_id"</span>: <span class="str">"your_operator_id"</span>}'
             </div>
@@ -550,7 +550,7 @@ Authorization: Bearer vgl_your_api_key
             <p>4. Vigil processes the audit and returns the verdict</p>
 
             <h3>Pricing discovery</h3>
-            <div class="code-block"><span class="cmd">curl</span> https://vigil.nadhari.ai/.well-known/x402</div>
+            <div class="code-block"><span class="cmd">curl</span> https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/.well-known/x402</div>
             <p>Returns pricing for all endpoints. Standard audit: <strong>$0.01</strong>. Deep audit: <strong>$0.05</strong>. Reputation lookups: <strong>free</strong> (API key required).</p>
 
             <h2 id="sdk">Agent SDK</h2>
@@ -562,7 +562,7 @@ Authorization: Bearer vgl_your_api_key
 
 <span class="cmd">def</span> <span class="key">audit_before_execute</span>(tx, agent_context):
     response = requests.post(
-        <span class="str">"https://vigil.nadhari.ai/api/audit"</span>,
+        <span class="str">"https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/audit"</span>,
         headers={<span class="str">"Authorization"</span>: <span class="str">"Bearer vgl_your_key"</span>},
         json={
             <span class="str">"transaction"</span>: tx,
@@ -583,7 +583,7 @@ Authorization: Bearer vgl_your_api_key
             <h3>JavaScript / TypeScript</h3>
             <div class="code-block">
 <span class="cmd">async function</span> <span class="key">auditTransaction</span>(tx, agentContext) {
-  <span class="cmd">const</span> res = <span class="cmd">await</span> fetch(<span class="str">'https://vigil.nadhari.ai/api/audit'</span>, {
+  <span class="cmd">const</span> res = <span class="cmd">await</span> fetch(<span class="str">'https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/audit'</span>, {
     method: <span class="str">'POST'</span>,
     headers: {
       <span class="str">'Authorization'</span>: <span class="str">'Bearer vgl_your_key'</span>,
@@ -616,7 +616,7 @@ Authorization: Bearer vgl_your_api_key
 <span class="cmd">vigil</span> register --name <span class="str">"my-agent"</span>
 
 <span class="cmt"># Point CLI to your remote server</span>
-<span class="cmd">vigil</span> config --server https://vigil.nadhari.ai
+<span class="cmd">vigil</span> config --server https://svc-mn0q6itc9qru4k2q.buildwithlocus.com
 
 <span class="cmt"># Regenerate a lost key</span>
 <span class="cmd">vigil</span> regenerate-key
@@ -706,7 +706,7 @@ Authorization: Bearer vgl_your_api_key
             <p>Configure webhooks to receive real-time notifications when audits complete.</p>
 
             <div class="code-block">
-<span class="cmd">curl</span> -X POST https://vigil.nadhari.ai/api/webhooks \
+<span class="cmd">curl</span> -X POST https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/api/webhooks \
   -H <span class="str">"Authorization: Bearer vgl_your_key"</span> \
   -d '{
     <span class="key">"url"</span>: <span class="str">"https://your-app.com/vigil-webhook"</span>,

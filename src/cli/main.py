@@ -131,7 +131,7 @@ def cli():
 # ─── Config ───────────────────────────────────────────────────────────────────
 
 @cli.command()
-@click.option("--server", "-s", help="Vigil server URL (e.g. https://vigil.nadhari.ai)")
+@click.option("--server", "-s", help="Vigil server URL (e.g. https://svc-mn0q6itc9qru4k2q.buildwithlocus.com)")
 @click.option("--key", "-k", help="API key to store")
 @click.option("--show", is_flag=True, help="Show current config")
 def config(server, key, show):

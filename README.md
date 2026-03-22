@@ -4,9 +4,9 @@
 
 Vigil is a Claude-powered auditing agent that monitors agent wallets on Base, combines statistical anomaly detection with contextual reasoning about agent intent, writes every audit as a verifiable onchain ERC-8004 receipt, and exposes itself as a paid service any agent in the ecosystem can call.
 
-**Live:** [vigil.nadhari.ai](https://vigil.nadhari.ai)
-**Docs:** [vigil.nadhari.ai/developer](https://vigil.nadhari.ai/developer)
-**API:** [vigil.nadhari.ai/docs](https://vigil.nadhari.ai/docs)
+**Live:** [svc-mn0q6itc9qru4k2q.buildwithlocus.com](https://svc-mn0q6itc9qru4k2q.buildwithlocus.com)
+**Docs:** [svc-mn0q6itc9qru4k2q.buildwithlocus.com/developer](https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/developer)
+**API:** [svc-mn0q6itc9qru4k2q.buildwithlocus.com/docs](https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/docs)
 
 ---
 
@@ -167,7 +167,7 @@ pip install -e .   # Installs the `vigil` command
 ```bash
 vigil register --name "my-agent"           # Register and get API key (saved to ~/.vigil/config.json)
 vigil regenerate-key                        # Regenerate a lost key using stored operator_id
-vigil config --server https://vigil.nadhari.ai  # Point CLI to remote server
+vigil config --server https://svc-mn0q6itc9qru4k2q.buildwithlocus.com  # Point CLI to remote server
 vigil config --show                         # Show saved config
 ```
 
