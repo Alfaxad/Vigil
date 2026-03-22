@@ -455,11 +455,47 @@
         .anim-3 { animation-delay: 0.3s; }
         .anim-4 { animation-delay: 0.5s; }
 
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #fafafa;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .mobile-menu {
+            display: none;
+            flex-direction: column;
+            gap: 0;
+            background: rgba(10,10,10,0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.3s ease;
+        }
+        .mobile-menu.open {
+            max-height: 300px;
+        }
+        .mobile-menu a {
+            padding: 14px 24px;
+            color: #a1a1aa;
+            text-decoration: none;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .mobile-menu a:last-child {
+            color: var(--green);
+            border-bottom: none;
+        }
         @media (max-width: 768px) {
             .features-grid { grid-template-columns: 1fr; }
             .mini-stats { grid-template-columns: repeat(2, 1fr); }
             .mini-row { grid-template-columns: 1fr 1fr; }
             .nav-links { display: none; }
+            .mobile-menu-btn { display: block; }
+            .mobile-menu { display: flex; }
             .hero h1 { font-size: clamp(32px, 8vw, 56px) !important; }
             .hero p { font-size: 14px !important; padding: 0 16px; }
             .features { padding: 60px 16px !important; }
@@ -490,7 +526,16 @@
                 <a href="/developer">Docs</a>
                 <a href="/login" class="nav-cta">Login</a>
             </div>
+            <button class="mobile-menu-btn" onclick="document.getElementById('mobile-menu').classList.toggle('open')" aria-label="Menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
         </nav>
+        <div class="mobile-menu" id="mobile-menu">
+            <a href="#features" onclick="document.getElementById('mobile-menu').classList.remove('open')">How it works</a>
+            <a href="#api" onclick="document.getElementById('mobile-menu').classList.remove('open')">API</a>
+            <a href="/developer">Docs</a>
+            <a href="/login">Login</a>
+        </div>
 
         <section class="hero">
             <h1 class="anim">The trust layer for <em>your agent.</em></h1>
