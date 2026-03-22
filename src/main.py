@@ -282,8 +282,12 @@ async def request_audit(request: Request):
                 "message": "Authenticate with Bearer API key or pay via x402 protocol",
                 "pricing": pricing["x402"]["endpoints"]["/api/audit"],
                 "payment_address": pricing["x402"]["payment_address"],
+                "accepts": pricing["x402"]["accepts"],
+                "maxAmountRequired": "0.01",
+                "resource": "/api/audit",
             },
             status_code=402,
+            headers={"X-Payment-Required": "x402"},
         )
 
     body = await request.json()
@@ -430,8 +434,12 @@ async def deep_audit(request: Request):
                 "message": "Authenticate with Bearer API key or pay via x402 protocol",
                 "pricing": pricing["x402"]["endpoints"]["/api/audit/deep"],
                 "payment_address": pricing["x402"]["payment_address"],
+                "accepts": pricing["x402"]["accepts"],
+                "maxAmountRequired": "0.05",
+                "resource": "/api/audit/deep",
             },
             status_code=402,
+            headers={"X-Payment-Required": "x402"},
         )
 
     body = await request.json()
