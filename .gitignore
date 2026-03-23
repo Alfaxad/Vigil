@@ -8,3 +8,11 @@ venv/
 *.egg-info/
 dist/
 build/
+
+# Hackathon working files
+synthesis-hackathon/
+.claude/
+ui.md
+spec.md
+vigil.md
+animation-prototype.jsx
