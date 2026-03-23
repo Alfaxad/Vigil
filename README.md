@@ -4,9 +4,9 @@
 [![Docs](https://img.shields.io/badge/Docs-Developer-60a5fa?style=for-the-badge&logo=readthedocs&logoColor=white)](https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/developer)
 [![API](https://img.shields.io/badge/API-Reference-f59e0b?style=for-the-badge&logo=fastapi&logoColor=white)](https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/docs)
 
-**Behavioral intelligence for autonomous agent wallets.**
+**The trust layer for your AI agent.**
 
-Vigil is a Claude-powered auditing agent that monitors agent wallets on Base, combines statistical anomaly detection with contextual reasoning about agent intent, writes every audit as a verifiable onchain ERC-8004 receipt, and exposes itself as a paid service any agent in the ecosystem can call.
+Vigil is an autonomous trust agent for the agentic economy. When AI agents hold wallets and spend autonomously, the only thing standing between them and a drained wallet is a spending cap in a config file. Vigil replaces that with intelligence. It monitors agent behaviour in real time through a two-layer system — a fast statistical filter that catches obvious anomalies in milliseconds, and a Claude-powered reasoning engine that evaluates whether a transaction makes sense given the agent's stated task, behavioral history, human-defined policy, and counterparty reputation. Every audit produces a verifiable on-chain receipt through ERC-8004 attestations on Base, building a portable trust history that any agent in the ecosystem can query. Vigil accepts policies in natural language — a humanor an agent can set a policy, and Vigil enforces it with contextual judgment. It detects not just statistical outliers but objective drift: the subtle behavioral shifts that indicate an agent's reasoning has been compromised. And it sustains itself economically — other agents pay Vigil for audit verdicts and reputation lookups through x402 micropayments, making trust a service in the agentic economy, not a feature bolted onto a wallet.
 
 ![Vigil Dashboard](vigil.png)
 
@@ -14,11 +14,9 @@ Vigil is a Claude-powered auditing agent that monitors agent wallets on Base, co
 
 ## The Problem
 
-When you give an AI agent a wallet, you're trusting a probabilistic system with your money. Today, the only thing standing between your agent and a drained wallet is a spending cap someone set in a config file — max $50 per transaction, $500 per day. A compromised agent that splits a drain into fifty small transactions passes every check. A legitimate agent making one large authorized purchase gets blocked.
+AI agents are becoming economic actors. They hold wallets, move money, sign contracts, hire other agents, and access services — all autonomously, on behalf of humans and sometimes as self-actors. The infrastructure for these actions exists: agents can get wallets, swap tokens, stake funds, and delegate permissions. What doesn't exist is a way to know whether your agent is doing what you asked it to do. Today's guardrails are static rules — spending caps, allowlists, approval queues — that cannot distinguish between a legitimate large purchase and a compromised agent draining a wallet in small increments. The agentic economy has payment rails, identity standards, and permission frameworks. It does not have trust.
 
-That's not trust infrastructure — that's a speed bump.
-
-**The missing layer is behavioral intelligence:** not "did this exceed a limit?" but "does this transaction make sense given what this agent is supposed to be doing?"
+**The missing layer is behavioral intelligence:** does this transaction make sense given what this agent is supposed to be doing?
 
 ---
 
