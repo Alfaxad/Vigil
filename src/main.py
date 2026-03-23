@@ -66,7 +66,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Vigil",
-    description="Intelligent watchdog for autonomous agent wallets on Ethereum",
+    description="The trust layer for your AI agent",
     version="1.0.0",
     lifespan=lifespan,
 )
