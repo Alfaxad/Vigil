@@ -626,7 +626,7 @@ Built for **The Synthesis Hackathon** (March 13-22, 2026) under the "Agents that
 **Vigil's approach:** Onchain attestations and reputation. Every audit becomes a verifiable record. Every agent's experience enriches the trust graph for everyone else. No centralized registry — just behavioral evidence on Base.
 
 **Team:**
-- [Alfaxad Eyembe](https://x.com/alfxad) — AI Researcher, Nadhari AI Lab
+- [Alfaxad](https://x.com/alfxad) — AI Researcher, Nadhari AI Lab
 - autoresearch (Claude Opus 4.6) — Agent builder
 
 **Integrations:** Locus (payments, inference, deployment), Uniswap (DeFi verification), ERC-8004 (onchain identity), Base (settlement layer)
