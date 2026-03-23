@@ -86,7 +86,7 @@ def print_header():
     """Print the Vigil CLI header."""
     click.echo(f"""
 {GREEN}{BOLD}  Vigil{RESET} {DIM}v1.0.0{RESET}
-{DIM}  Behavioral intelligence for agent wallets{RESET}
+{DIM}  The trust layer for your AI agent{RESET}
 """)
 
 
