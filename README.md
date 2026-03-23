@@ -1,12 +1,14 @@
 # Vigil
 
+[![Website](https://img.shields.io/badge/Website-Live-22c55e?style=for-the-badge&logo=vercel&logoColor=white)](https://svc-mn0q6itc9qru4k2q.buildwithlocus.com)
+[![Docs](https://img.shields.io/badge/Docs-Developer-60a5fa?style=for-the-badge&logo=readthedocs&logoColor=white)](https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/developer)
+[![API](https://img.shields.io/badge/API-Reference-f59e0b?style=for-the-badge&logo=fastapi&logoColor=white)](https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/docs)
+
 **Behavioral intelligence for autonomous agent wallets.**
 
 Vigil is a Claude-powered auditing agent that monitors agent wallets on Base, combines statistical anomaly detection with contextual reasoning about agent intent, writes every audit as a verifiable onchain ERC-8004 receipt, and exposes itself as a paid service any agent in the ecosystem can call.
 
-**Live:** [svc-mn0q6itc9qru4k2q.buildwithlocus.com](https://svc-mn0q6itc9qru4k2q.buildwithlocus.com)
-**Docs:** [svc-mn0q6itc9qru4k2q.buildwithlocus.com/developer](https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/developer)
-**API:** [svc-mn0q6itc9qru4k2q.buildwithlocus.com/docs](https://svc-mn0q6itc9qru4k2q.buildwithlocus.com/docs)
+![Vigil Dashboard](vigil.png)
 
 ---
 
@@ -157,6 +159,10 @@ All authenticated endpoints require `Authorization: Bearer <api_key>`. Requests 
 
 ### CLI
 Vigil ships with a full-featured terminal interface for agents and operators. Every web feature is available from the command line.
+
+![Vigil CLI — Register and Audit](cli1.png)
+
+![Vigil CLI — Reputation and Graph](cli2.png)
 
 **Install:**
 ```bash
@@ -379,8 +385,77 @@ docker run -p 8080:8080 --env-file .env vigil
 ### Railway
 Connect the GitHub repo to Railway. The `Dockerfile` and `Procfile` are pre-configured.
 
-### Locus Build (autonomous)
-When funded, Vigil can self-deploy via Locus Build API — push code to GitHub, deploy to Railway, all paid through the Locus wallet.
+### Locus Build
+
+Deploy any app to production using the Locus Build API. Vigil was deployed this way — an agent deploying itself.
+
+**1. Register and get a token:**
+```bash
+# Register with Locus (if you haven't already)
+curl -X POST https://beta-api.paywithlocus.com/api/register \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-agent"}'
+
+# Exchange API key for a Build token
+curl -X POST https://beta-api.buildwithlocus.com/v1/auth/exchange \
+  -H "Content-Type: application/json" \
+  -d '{"apiKey": "claw_dev_your_key"}'
+```
+
+**2. Create a project and environment:**
+```bash
+TOKEN="your_build_token"
+BASE="https://beta-api.buildwithlocus.com/v1"
+
+# Create project
+PROJECT_ID=$(curl -s -X POST "$BASE/projects" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "my-app", "description": "My app"}' | jq -r '.id')
+
+# Create environment
+ENV_ID=$(curl -s -X POST "$BASE/projects/$PROJECT_ID/environments" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "production", "type": "production"}' | jq -r '.id')
+```
+
+**3. Create a service from GitHub:**
+```bash
+# Connect GitHub first at https://beta.buildwithlocus.com/integrations
+SERVICE=$(curl -s -X POST "$BASE/services" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "web",
+    "projectId": "'$PROJECT_ID'",
+    "environmentId": "'$ENV_ID'",
+    "source": {"type": "github", "repo": "your-org/your-repo", "branch": "main"},
+    "buildConfig": {"method": "dockerfile", "dockerfile": "Dockerfile"},
+    "runtime": {"port": 8080, "cpu": 256, "memory": 512},
+    "autoDeploy": true
+  }')
+SERVICE_ID=$(echo $SERVICE | jq -r '.id')
+SERVICE_URL=$(echo $SERVICE | jq -r '.url')
+echo "Service URL: $SERVICE_URL"
+```
+
+**4. Set env variables and deploy:**
+```bash
+# Set environment variables
+curl -X PUT "$BASE/variables/service/$SERVICE_ID" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"variables": {"LOCUS_API_KEY": "claw_dev_xxx", "PORT": "8080"}}'
+
+# Trigger deployment
+curl -X POST "$BASE/deployments" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"serviceId": "'$SERVICE_ID'"}'
+```
+
+New workspaces start with $1.00 free credit (covers 4 services at $0.25/month each). Builds take 2-4 minutes. Poll `GET /v1/deployments/:id` until status is `healthy`.
 
 ---
 
